@@ -1,0 +1,23 @@
+{
+  "name": "euroshub-kitchen-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspace=apps/api",
+    "db:migrate": "npm run db:migrate --workspace=apps/api",
+    "db:push": "npm run db:push --workspace=apps/api",
+    "db:generate": "npm run db:generate --workspace=apps/api",
+    "db:seed": "npm run db:seed --workspace=apps/api",
+    "db:studio": "npm run db:studio --workspace=apps/api",
+    "db:setup:windows": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-postgres.ps1",
+    "db:start:windows": "powershell -ExecutionPolicy Bypass -File ./scripts/start-postgres.ps1"
+  }
+}
