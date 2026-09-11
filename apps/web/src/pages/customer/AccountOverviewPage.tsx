@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../api/client';
 import { Order, Reservation } from '../../types';
 import { formatCurrency } from '../../utils/currency';
+import { formatDate, formatTime } from '../../utils/date';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -46,42 +47,42 @@ export const AccountOverviewPage: React.FC = () => {
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5 flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-terracotta-50 text-terracotta flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-terracotta/10 text-terracotta flex items-center justify-center">
             <ShoppingBag className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[11px] text-charcoal-400 uppercase tracking-wider block font-medium">
+            <span className="text-[11px] text-charcoal-400 dark:text-charcoal-500 uppercase tracking-wider block font-medium">
               Total Orders
             </span>
-            <span className="text-2xl font-serif font-bold text-charcoal">
+            <span className="text-2xl font-serif font-bold text-charcoal dark:text-charcoal-100">
               {recentOrders.length > 0 ? `${recentOrders.length}+` : '0'}
             </span>
           </div>
         </Card>
 
         <Card className="p-5 flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-olive-50 text-olive flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-olive/10 text-olive flex items-center justify-center">
             <Calendar className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[11px] text-charcoal-400 uppercase tracking-wider block font-medium">
+            <span className="text-[11px] text-charcoal-400 dark:text-charcoal-500 uppercase tracking-wider block font-medium">
               Upcoming Bookings
             </span>
-            <span className="text-2xl font-serif font-bold text-charcoal">
+            <span className="text-2xl font-serif font-bold text-charcoal dark:text-charcoal-100">
               {upcomingReservations.length}
             </span>
           </div>
         </Card>
 
         <Card className="p-5 flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <Star className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[11px] text-charcoal-400 uppercase tracking-wider block font-medium">
+            <span className="text-[11px] text-charcoal-400 dark:text-charcoal-500 uppercase tracking-wider block font-medium">
               Dining Status
             </span>
-            <span className="text-sm font-bold text-charcoal flex items-center gap-1 mt-1">
+            <span className="text-sm font-bold text-charcoal dark:text-charcoal-100 flex items-center gap-1 mt-1">
               Euroshub Member
             </span>
           </div>
@@ -91,7 +92,7 @@ export const AccountOverviewPage: React.FC = () => {
       {/* Recent Orders Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-serif font-bold text-charcoal">Recent Dining Orders</h3>
+          <h3 className="text-lg font-serif font-bold text-charcoal dark:text-charcoal-100">Recent Dining Orders</h3>
           <Link
             to="/account/orders"
             className="text-xs font-semibold text-terracotta hover:underline inline-flex items-center gap-0.5"
@@ -122,23 +123,21 @@ export const AccountOverviewPage: React.FC = () => {
               >
                 <div>
                   <div className="flex items-center gap-2.5 mb-1">
-                    <span className="font-mono font-bold text-sm text-charcoal">
+                    <span className="font-mono font-bold text-sm text-charcoal dark:text-charcoal-100">
                       {order.orderNumber}
                     </span>
                     <Badge variant={order.status.toLowerCase() as any} dot>
                       {order.status}
                     </Badge>
                   </div>
-                  <p className="text-xs text-charcoal-500">
-                    {new Date(order.createdAt).toLocaleDateString('en-US', {
-                      dateStyle: 'medium',
-                    })}{' '}
+                  <p className="text-xs text-charcoal-500 dark:text-charcoal-400">
+                    {formatDate(order.createdAt)}{' '}
                     • {order.type.replace('_', ' ')} • {order.items.length}{' '}
                     {order.items.length === 1 ? 'dish' : 'dishes'}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-bistro-border">
+                <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-bistro-border dark:border-charcoal-700">
                   <span className="font-bold text-base text-terracotta">
                     {formatCurrency(order.total)}
                   </span>
@@ -157,7 +156,7 @@ export const AccountOverviewPage: React.FC = () => {
       {/* Upcoming Reservations */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-serif font-bold text-charcoal">Upcoming Table Bookings</h3>
+          <h3 className="text-lg font-serif font-bold text-charcoal dark:text-charcoal-100">Upcoming Table Bookings</h3>
           <Link
             to="/account/reservations"
             className="text-xs font-semibold text-terracotta hover:underline inline-flex items-center gap-0.5"
@@ -169,9 +168,9 @@ export const AccountOverviewPage: React.FC = () => {
         {isResLoading ? (
           <Skeleton className="h-20 w-full" />
         ) : upcomingReservations.length === 0 ? (
-          <div className="bg-white p-6 rounded-xl border border-bistro-border text-center space-y-3">
-            <Calendar className="w-8 h-8 text-charcoal-400 mx-auto" />
-            <p className="text-xs text-charcoal-500">You have no upcoming table bookings.</p>
+          <div className="bg-white dark:bg-charcoal-850 p-6 rounded-xl border border-bistro-border dark:border-charcoal-700 text-center space-y-3">
+            <Calendar className="w-8 h-8 text-charcoal-400 dark:text-charcoal-500 mx-auto" />
+            <p className="text-xs text-charcoal-500 dark:text-charcoal-400">You have no upcoming table bookings.</p>
             <Link to="/reservation">
               <Button variant="outline" size="sm">
                 Reserve a Table Now
@@ -184,20 +183,13 @@ export const AccountOverviewPage: React.FC = () => {
               <Card key={res.id} className="p-4 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-sm text-charcoal">
-                      {new Date(res.date).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                    <span className="font-semibold text-sm text-charcoal dark:text-charcoal-100">
+                      {formatDate(res.date)}
                     </span>
                     <Badge variant={res.status.toLowerCase() as any}>{res.status}</Badge>
                   </div>
-                  <p className="text-xs text-charcoal-500">
-                    {new Date(res.date).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}{' '}
+                  <p className="text-xs text-charcoal-500 dark:text-charcoal-400">
+                    {formatTime(res.date)}{' '}
                     • {res.partySize} Guests
                   </p>
                 </div>

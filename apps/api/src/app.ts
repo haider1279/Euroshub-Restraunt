@@ -15,6 +15,7 @@ import adminRoutes from './routes/admin.routes';
 import uploadRoutes from './routes/upload.routes';
 import tableRoutes from './routes/table.routes';
 import socialRoutes from './routes/social.routes';
+import { uploadDir } from './controllers/upload.controller';
 
 export const app = express();
 
@@ -45,7 +46,6 @@ app.use(cookieParser());
 app.use(express.json());
 
 // Serve uploaded menu images statically
-const uploadDir = path.resolve(__dirname, '../../../../uploads');
 app.use('/uploads', express.static(uploadDir));
 
 // Health check endpoint (public, unauthenticated)

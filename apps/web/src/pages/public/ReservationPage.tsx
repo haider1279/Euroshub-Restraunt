@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { apiRequest } from '../../api/client';
 import { Reservation } from '../../types';
+import { formatDateTime } from '../../utils/date';
+import { useTableAvailability } from '../../hooks/useTableAvailability';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
@@ -36,6 +38,7 @@ export const ReservationPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { settings } = useRestaurant();
+  const { data: availability } = useTableAvailability();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -149,14 +152,7 @@ export const ReservationPage: React.FC = () => {
             <div className="flex justify-between items-center pb-2">
               <span className="text-charcoal-500">Date & Time</span>
               <span className="font-bold text-charcoal-900">
-                {new Date(confirmedReservation.date).toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {formatDateTime(confirmedReservation.date)}
               </span>
             </div>
             <div className="flex justify-between items-center py-2">
@@ -247,7 +243,7 @@ export const ReservationPage: React.FC = () => {
 
             <div className="pt-2 text-[11px] text-charcoal-400 text-center space-y-1">
               <p>Reserved tables are held for 15 minutes past booking time.</p>
-              <p>Walk-ins are also welcome daily across our 100 tables.</p>
+              <p>Walk-ins welcome daily. {availability ? `${availability.totalTables} tables across the restaurant.` : 'Spacious seating available.'}</p>
             </div>
           </form>
         </Card>
@@ -266,8 +262,10 @@ export const ReservationPage: React.FC = () => {
         <div className="bg-white p-4 rounded-xl border border-bistro-border flex items-start space-x-3">
           <Utensils className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-serif font-bold text-charcoal text-sm">100 Seated Tables</h4>
-            <p className="mt-0.5">Spacious fast-food seating designed for families and groups.</p>
+            <h4 className="font-serif font-bold text-charcoal text-sm">
+              {availability ? `${availability.availableTables} of ${availability.totalTables} Tables Available` : 'Spacious Seating'}
+            </h4>
+            <p className="mt-0.5">Fast-food seating designed for families and groups.</p>
           </div>
         </div>
 

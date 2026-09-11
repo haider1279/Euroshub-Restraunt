@@ -47,12 +47,12 @@ const STEPS: Array<{
 export const Timeline: React.FC<TimelineProps> = ({ currentStatus }) => {
   if (currentStatus === 'CANCELLED') {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-        <div className="w-12 h-12 mx-auto rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-3">
+      <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl p-6 text-center">
+        <div className="w-12 h-12 mx-auto rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400 mb-3">
           <XCircle className="w-7 h-7" />
         </div>
-        <h4 className="text-lg font-serif font-bold text-red-900 mb-1">Order Cancelled</h4>
-        <p className="text-sm text-red-700">This order was cancelled and will not be prepared.</p>
+        <h4 className="text-lg font-serif font-bold text-red-900 dark:text-red-200 mb-1">Order Cancelled</h4>
+        <p className="text-sm text-red-700 dark:text-red-300">This order was cancelled and will not be prepared.</p>
       </div>
     );
   }
@@ -65,7 +65,7 @@ export const Timeline: React.FC<TimelineProps> = ({ currentStatus }) => {
       {/* Desktop / Tablet horizontal timeline */}
       <div className="hidden md:flex items-center justify-between relative">
         {/* Progress Bar background */}
-        <div className="absolute top-5 left-8 right-8 h-1 bg-charcoal-100 z-0" />
+        <div className="absolute top-5 left-8 right-8 h-1 bg-charcoal-100 dark:bg-charcoal-700 z-0" />
         <div
           className="absolute top-5 left-8 h-1 bg-terracotta transition-all duration-500 z-0"
           style={{
@@ -83,10 +83,10 @@ export const Timeline: React.FC<TimelineProps> = ({ currentStatus }) => {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-bistro border-2 ${
                   isCurrent
-                    ? 'bg-terracotta border-terracotta text-white ring-4 ring-terracotta-100 shadow-md scale-110'
+                    ? 'bg-terracotta border-terracotta text-white ring-4 ring-terracotta-100 dark:ring-terracotta/20 shadow-md scale-110'
                     : isCompleted
                     ? 'bg-olive border-olive text-white'
-                    : 'bg-white border-charcoal-200 text-charcoal-400'
+                    : 'bg-white dark:bg-charcoal-800 border-charcoal-200 dark:border-charcoal-700 text-charcoal-400 dark:text-charcoal-500'
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -96,8 +96,8 @@ export const Timeline: React.FC<TimelineProps> = ({ currentStatus }) => {
                   isCurrent
                     ? 'text-terracotta font-bold'
                     : isCompleted
-                    ? 'text-charcoal-900'
-                    : 'text-charcoal-400'
+                    ? 'text-charcoal-900 dark:text-charcoal-200'
+                    : 'text-charcoal-400 dark:text-charcoal-500'
                 }`}
               >
                 {step.label}
@@ -120,10 +120,10 @@ export const Timeline: React.FC<TimelineProps> = ({ currentStatus }) => {
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center transition-bistro border-2 ${
                     isCurrent
-                      ? 'bg-terracotta border-terracotta text-white ring-4 ring-terracotta-100 shadow-md'
+                      ? 'bg-terracotta border-terracotta text-white ring-4 ring-terracotta-100 dark:ring-terracotta/20 shadow-md'
                       : isCompleted
                       ? 'bg-olive border-olive text-white'
-                      : 'bg-white border-charcoal-200 text-charcoal-400'
+                      : 'bg-white dark:bg-charcoal-800 border-charcoal-200 dark:border-charcoal-700 text-charcoal-400 dark:text-charcoal-500'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -131,7 +131,7 @@ export const Timeline: React.FC<TimelineProps> = ({ currentStatus }) => {
                 {idx < STEPS.length - 1 && (
                   <div
                     className={`w-0.5 h-10 mt-1 ${
-                      idx < currentIndex ? 'bg-olive' : 'bg-charcoal-200'
+                      idx < currentIndex ? 'bg-olive' : 'bg-charcoal-200 dark:bg-charcoal-700'
                     }`}
                   />
                 )}
@@ -139,12 +139,12 @@ export const Timeline: React.FC<TimelineProps> = ({ currentStatus }) => {
               <div className="pt-0.5">
                 <h5
                   className={`text-sm font-semibold ${
-                    isCurrent ? 'text-terracotta font-bold' : isCompleted ? 'text-charcoal-900' : 'text-charcoal-400'
+                    isCurrent ? 'text-terracotta font-bold' : isCompleted ? 'text-charcoal-900 dark:text-charcoal-200' : 'text-charcoal-400 dark:text-charcoal-500'
                   }`}
                 >
                   {step.label}
                 </h5>
-                <p className="text-xs text-charcoal-500 mt-0.5">{step.description}</p>
+                <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-0.5">{step.description}</p>
               </div>
             </div>
           );

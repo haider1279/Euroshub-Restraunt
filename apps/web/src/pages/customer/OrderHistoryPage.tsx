@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../../api/client';
 import { Order } from '../../types';
 import { formatCurrency } from '../../utils/currency';
+import { formatLongDateTime } from '../../utils/date';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -24,9 +25,9 @@ export const OrderHistoryPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="pb-4 border-b border-bistro-border">
-        <h2 className="text-xl font-serif font-bold text-charcoal">Order History</h2>
-        <p className="text-xs text-charcoal-500 mt-0.5">
+      <div className="pb-4 border-b border-bistro-border dark:border-charcoal-700">
+        <h2 className="text-xl font-serif font-bold text-charcoal dark:text-charcoal-100">Order History</h2>
+        <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-0.5">
           View all your previous dine-in, takeaway, and delivery meals.
         </p>
       </div>
@@ -62,29 +63,26 @@ export const OrderHistoryPage: React.FC = () => {
             >
               <div>
                 <div className="flex items-center gap-3 mb-1.5">
-                  <span className="font-mono font-bold text-sm text-charcoal">
+                  <span className="font-mono font-bold text-sm text-charcoal dark:text-charcoal-100">
                     {order.orderNumber}
                   </span>
                   <Badge variant={order.status.toLowerCase() as any} dot>
                     {order.status}
                   </Badge>
                 </div>
-                <p className="text-xs text-charcoal-500">
-                  {new Date(order.createdAt).toLocaleDateString('en-US', {
-                    dateStyle: 'long',
-                    timeStyle: 'short',
-                  })}
+                <p className="text-xs text-charcoal-500 dark:text-charcoal-400">
+                  {formatLongDateTime(order.createdAt)}
                 </p>
-                <div className="text-xs text-charcoal-600 mt-2">
+                <div className="text-xs text-charcoal-600 dark:text-charcoal-400 mt-2">
                   <span className="font-medium capitalize">{order.type.replace('_', ' ')}</span>
-                  <span className="text-charcoal-300 mx-2">•</span>
+                  <span className="text-charcoal-300 dark:text-charcoal-600 mx-2">•</span>
                   <span>{order.items.length} {order.items.length === 1 ? 'item' : 'items'}</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-5 pt-3 sm:pt-0 border-t sm:border-t-0 border-bistro-border">
+              <div className="flex items-center justify-between sm:justify-end gap-5 pt-3 sm:pt-0 border-t sm:border-t-0 border-bistro-border dark:border-charcoal-700">
                 <div className="text-right">
-                  <span className="text-[10px] text-charcoal-400 uppercase tracking-wider block">Total</span>
+                  <span className="text-[10px] text-charcoal-400 dark:text-charcoal-500 uppercase tracking-wider block">Total</span>
                   <span className="font-serif font-bold text-lg text-terracotta">
                     {formatCurrency(order.total)}
                   </span>
@@ -101,7 +99,7 @@ export const OrderHistoryPage: React.FC = () => {
 
           {/* Pagination Controls */}
           {pagination && pagination.totalPages > 1 && (
-            <div className="flex justify-between items-center pt-4 border-t border-bistro-border text-xs text-charcoal-600">
+            <div className="flex justify-between items-center pt-4 border-t border-bistro-border dark:border-charcoal-700 text-xs text-charcoal-600 dark:text-charcoal-400">
               <span>
                 Page {pagination.page} of {pagination.totalPages}
               </span>

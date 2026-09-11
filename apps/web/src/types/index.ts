@@ -180,6 +180,22 @@ export interface RestaurantSettings {
   deliveryEnabled: boolean;
   deliveryFee: number;
   tableCount: number;
+  signatureMenuItemId?: string | null;
+  signatureMenuItem?: MenuItem | null;
   footerText?: string | null;
   reservationSettings?: any;
+}
+
+export interface TableAvailability {
+  totalTables: number;
+  availableTables: number;
+  occupiedTables: number;
+  totalSeats: number;
+  availableSeats: number;
+  timestamp?: string;
+}
+
+export interface ReviewSummary {
+  averageRating: number | null;
+  totalReviews: number;
 }

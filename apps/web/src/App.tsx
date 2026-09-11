@@ -1,5 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 
+// Infrastructure
+import { ScrollToTop } from './components/common/ScrollToTop';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+
 // Layouts
 import { PublicLayout } from './layouts/PublicLayout';
 import { AccountLayout } from './layouts/AccountLayout';
@@ -42,56 +46,61 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 
 export default function App() {
   return (
-    <Routes>
-      {/* ── Public Routes (with nav + footer) ── */}
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/menu" element={<MenuPage />} />
-        <Route path="/menu/:id" element={<DishDetailPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-        <Route path="/reservation" element={<ReservationPage />} />
-        <Route path="/reservations" element={<ReservationPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
+    <>
+      {/* Resets scroll position on every route change */}
+      <ScrollToTop />
 
-      {/* ── Customer Account Routes (auth required) ── */}
-      <Route element={<RequireAuth />}>
-        <Route element={<AccountLayout />}>
-          <Route path="/account" element={<AccountOverviewPage />} />
-          <Route path="/account/orders" element={<OrderHistoryPage />} />
-          <Route path="/account/orders/:id" element={<OrderDetailPage />} />
-          <Route path="/account/reservations" element={<ReservationHistoryPage />} />
-          <Route path="/account/reviews" element={<CustomerReviewsPage />} />
-          <Route path="/account/settings" element={<AccountOverviewPage />} />
+      <Routes>
+        {/* ── Public Routes (with nav + footer) ── */}
+        <Route element={<ErrorBoundary><PublicLayout /></ErrorBoundary>}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/menu" element={<MenuPage />} />
+          <Route path="/menu/:id" element={<DishDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
+          <Route path="/reservation" element={<ReservationPage />} />
+          <Route path="/reservations" element={<ReservationPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Route>
-      </Route>
 
-      {/* ── Admin Routes (admin role required) ── */}
-      <Route element={<RequireAdmin />}>
-        <Route element={<AdminLayout />}>
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-          <Route path="/admin/orders" element={<AdminOrdersPage />} />
-          <Route path="/admin/orders/:id" element={<AdminOrderDetailPage />} />
-          <Route path="/admin/menu" element={<AdminMenuPage />} />
-          <Route path="/admin/menu/:id" element={<AdminMenuPage />} />
-          <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-          <Route path="/admin/reservations" element={<AdminReservationsPage />} />
-          <Route path="/admin/customers" element={<AdminUsersPage />} />
-          <Route path="/admin/customers/:id" element={<AdminUsersPage />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/reviews" element={<AdminReviewsPage />} />
-          <Route path="/admin/settings" element={<AdminSettingsPage />} />
+        {/* ── Customer Account Routes (auth required) ── */}
+        <Route element={<RequireAuth />}>
+          <Route element={<ErrorBoundary><AccountLayout /></ErrorBoundary>}>
+            <Route path="/account" element={<AccountOverviewPage />} />
+            <Route path="/account/orders" element={<OrderHistoryPage />} />
+            <Route path="/account/orders/:id" element={<OrderDetailPage />} />
+            <Route path="/account/reservations" element={<ReservationHistoryPage />} />
+            <Route path="/account/reviews" element={<CustomerReviewsPage />} />
+            <Route path="/account/settings" element={<AccountOverviewPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* ── 404 Fallback ── */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* ── Admin Routes (admin role required) ── */}
+        <Route element={<RequireAdmin />}>
+          <Route element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin/orders" element={<AdminOrdersPage />} />
+            <Route path="/admin/orders/:id" element={<AdminOrderDetailPage />} />
+            <Route path="/admin/menu" element={<AdminMenuPage />} />
+            <Route path="/admin/menu/:id" element={<AdminMenuPage />} />
+            <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+            <Route path="/admin/reservations" element={<AdminReservationsPage />} />
+            <Route path="/admin/customers" element={<AdminUsersPage />} />
+            <Route path="/admin/customers/:id" element={<AdminUsersPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+            <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          </Route>
+        </Route>
+
+        {/* ── 404 Fallback ── */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }

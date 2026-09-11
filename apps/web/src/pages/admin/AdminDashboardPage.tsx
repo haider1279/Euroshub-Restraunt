@@ -23,6 +23,7 @@ import {
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Order, Reservation } from '../../types';
+import { formatDate } from '../../utils/date';
 
 interface DashboardStats {
   todayRevenue: number;
@@ -235,13 +236,7 @@ export default function AdminDashboardPage() {
                   <div>
                     <p className="text-sm font-semibold text-charcoal">{r.customer?.name}</p>
                     <p className="text-xs text-stone-500">
-                      {new Date(r.date).toLocaleDateString('en-GB', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatDate(r.date)}
                       {' · '}Party of {r.partySize}
                     </p>
                   </div>

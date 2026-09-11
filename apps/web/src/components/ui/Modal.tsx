@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { cn } from '../../utils/cn';
 
 interface ModalProps {
   isOpen: boolean;
@@ -54,19 +55,22 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Dialog */}
       <div
-        className={`relative bg-white rounded-xl shadow-modal w-full ${maxWidthStyles[maxWidth]} p-6 z-10 border border-bistro-border transform transition-all`}
+        className={cn(
+          'relative bg-white rounded-xl shadow-modal w-full p-6 z-10 border border-bistro-border transform transition-all dark:bg-charcoal-800 dark:border-charcoal-700 dark:shadow-2xl',
+          maxWidthStyles[maxWidth]
+        )}
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-bistro-border">
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-bistro-border dark:border-charcoal-700">
           {title ? (
-            <h3 className="text-xl font-serif font-semibold text-charcoal">{title}</h3>
+            <h3 className="text-xl font-serif font-semibold text-charcoal dark:text-charcoal-100">{title}</h3>
           ) : (
             <div />
           )}
           <button
             onClick={onClose}
-            className="p-1.5 text-charcoal-400 hover:text-charcoal-800 hover:bg-charcoal-100 rounded-lg transition-bistro focus:outline-none"
+            className="p-1.5 text-charcoal-400 hover:text-charcoal-800 hover:bg-charcoal-100 dark:hover:text-charcoal-100 dark:hover:bg-charcoal-700 rounded-lg transition-bistro focus:outline-none"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />

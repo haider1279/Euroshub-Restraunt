@@ -13,10 +13,20 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  getMenuItemVariants,
+  createVariant,
+  updateVariant,
+  deleteVariant,
 } from '../controllers/menu.controller';
 import { authenticateJWT, requireAdmin } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
-import { createMenuItemSchema, updateMenuItemSchema, createCategorySchema } from '../schemas/menu.schema';
+import {
+  createMenuItemSchema,
+  updateMenuItemSchema,
+  createCategorySchema,
+  createVariantSchema,
+  updateVariantSchema,
+} from '../schemas/menu.schema';
 
 const router = Router();
 
@@ -36,5 +46,11 @@ router.delete(['/admin/menu-items/:id', '/admin/menu/items/:id'], authenticateJW
 router.post(['/admin/menu-categories', '/admin/menu/categories'], authenticateJWT, requireAdmin, validateBody(createCategorySchema), createCategory);
 router.put(['/admin/menu-categories/:id', '/admin/menu/categories/:id'], authenticateJWT, requireAdmin, updateCategory);
 router.delete(['/admin/menu-categories/:id', '/admin/menu/categories/:id'], authenticateJWT, requireAdmin, deleteCategory);
+
+// Admin Product Variants / Options Management
+router.get(['/admin/menu-items/:id/variants', '/admin/menu/items/:id/variants'], authenticateJWT, requireAdmin, getMenuItemVariants);
+router.post(['/admin/menu-items/:id/variants', '/admin/menu/items/:id/variants'], authenticateJWT, requireAdmin, validateBody(createVariantSchema), createVariant);
+router.put(['/admin/variants/:variantId', '/admin/menu/variants/:variantId'], authenticateJWT, requireAdmin, validateBody(updateVariantSchema), updateVariant);
+router.delete(['/admin/variants/:variantId', '/admin/menu/variants/:variantId'], authenticateJWT, requireAdmin, deleteVariant);
 
 export default router;

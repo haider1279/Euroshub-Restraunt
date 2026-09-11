@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,18 +8,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Core European Bistro Palette
+        // Refined European Bistro & Pakistani Kitchen Palette
         charcoal: {
           DEFAULT: '#1A1815',
-          50: '#F7F6F5',
-          100: '#E6E4E1',
-          200: '#C8C4BE',
-          300: '#A49E96',
-          400: '#756F67',
-          500: '#4A4640',
-          600: '#2E2B27',
-          700: '#24211D',
-          800: '#1A1815',
+          50: '#F8F6F2',
+          100: '#EFECE6',
+          200: '#DDD7CE',
+          300: '#C2BBB0',
+          400: '#A19A8E',
+          500: '#787166',
+          600: '#4D473F',
+          700: '#2E2A25',
+          800: '#1F1C18',
+          850: '#171512',
           900: '#12100E',
           950: '#0A0908',
         },
@@ -54,6 +56,10 @@ export default {
           card: '#FDFBF8',
           border: '#EBE4DA',
           muted: '#857D74',
+          'dark-bg': '#0E0C0A',
+          'dark-surface': '#161411',
+          'dark-card': '#1E1B17',
+          'dark-border': '#302B24',
         },
         // Status colors
         status: {
@@ -75,11 +81,14 @@ export default {
         md: '8px',
         lg: '10px',
         xl: '12px',
+        '2xl': '16px',
       },
       boxShadow: {
         soft: '0 2px 10px rgba(26, 24, 21, 0.05)',
         card: '0 4px 20px rgba(26, 24, 21, 0.06)',
         modal: '0 20px 40px rgba(26, 24, 21, 0.15)',
+        'dark-soft': '0 2px 10px rgba(0, 0, 0, 0.3)',
+        'dark-card': '0 4px 20px rgba(0, 0, 0, 0.4)',
       },
     },
   },

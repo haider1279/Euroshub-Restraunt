@@ -36,21 +36,36 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
 
     // Validate table if DINE_IN and provided
     let finalTableNumber: string | null = null;
-    if (type === 'DINE_IN') {
-      if (tableNumber) {
-        finalTableNumber = String(tableNumber).trim();
-        // Optional verification if table exists and active
-        const tableRecord = await prisma.restaurantTable.findUnique({
-          where: { tableNumber: finalTableNumber },
+    if (type === 'DINE_IN' && tableNumber) {
+      finalTableNumber = String(tableNumber).trim();
+      const tableRecord = await prisma.restaurantTable.findUnique({
+        where: { tableNumber: finalTableNumber },
+      });
+      if (!tableRecord || !tableRecord.isActive) {
+        return res.status(400).json({
+          error: {
+            code: 'TABLE_INACTIVE',
+            message: `Table ${finalTableNumber} is currently not available for dining.`,
+          },
         });
-        if (tableRecord && !tableRecord.isActive) {
-          return res.status(400).json({
-            error: {
-              code: 'TABLE_INACTIVE',
-              message: `Table ${finalTableNumber} is currently not available for dining.`,
-            },
-          });
-        }
+      }
+
+      // Enforce single active occupancy: table cannot have another active order
+      const activeOrderOnTable = await prisma.order.findFirst({
+        where: {
+          type: 'DINE_IN',
+          tableNumber: finalTableNumber,
+          status: { in: ['PENDING', 'CONFIRMED', 'PREPARING', 'READY'] },
+        },
+      });
+
+      if (activeOrderOnTable) {
+        return res.status(400).json({
+          error: {
+            code: 'TABLE_OCCUPIED',
+            message: `Table ${finalTableNumber} is currently occupied by an active order. Please select another table.`,
+          },
+        });
       }
     }
 

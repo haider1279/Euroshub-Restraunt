@@ -1,39 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { api } from '../api/client';
+import React, { createContext, useContext, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '../api/client';
+import { RestaurantSettings, SocialLink } from '../types';
+import { subscribeToSync } from '../utils/sync';
 
-export interface RestaurantSettings {
-  id: string;
-  name: string;
-  headline?: string | null;
-  subtitle?: string | null;
-  description: string;
-  phone: string;
-  email: string;
-  address: string;
-  logoUrl?: string | null;
-  currency: string;
-  timezone: string;
-  openingHours: Record<string, { open: string; close: string; closed?: boolean }>;
-  deliveryEnabled: boolean;
-  deliveryFee: number;
-  tableCount: number;
-  footerText?: string | null;
-  reservationSettings?: any;
-}
-
-export interface SocialLink {
-  id: string;
-  platform: string;
-  url: string;
-  isActive: boolean;
-}
+export type { RestaurantSettings, SocialLink };
 
 interface RestaurantContextType {
   settings: RestaurantSettings;
   socialLinks: SocialLink[];
   isLoading: boolean;
-  refetchSettings: () => Promise<void>;
-  refetchSocialLinks: () => Promise<void>;
+  refetchSettings: () => Promise<any>;
+  refetchSocialLinks: () => Promise<any>;
 }
 
 const defaultSettings: RestaurantSettings = {
@@ -43,7 +21,7 @@ const defaultSettings: RestaurantSettings = {
   subtitle: 'Crispy burgers, loaded pizzas, and artisanal sandwiches prepared daily at Kohistan Tower, Saddar.',
   description:
     'Euroshub Kitchen brings quality fast-food dining and takeaway to Saddar, Rawalpindi. Handcrafted pizzas, gourmet burgers, and fresh sides crafted with high-standard ingredients.',
-  phone: '+92 xxx xxx xxx (Needs Admin Input)',
+  phone: '+92 300 1234567',
   email: 'haider1.euroshub@gmail.com',
   address: 'Kohistan Tower, Saddar, Rawalpindi, Office 609',
   logoUrl: null,
@@ -67,40 +45,50 @@ const defaultSettings: RestaurantSettings = {
 const RestaurantContext = createContext<RestaurantContextType | undefined>(undefined);
 
 export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<RestaurantSettings>(defaultSettings);
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const queryClient = useQueryClient();
 
-  const fetchSettings = useCallback(async () => {
-    try {
-      const res = await api.get('/settings');
-      if (res.data?.settings) {
-        setSettings(res.data.settings);
-      }
-    } catch (err) {
-      console.warn('Could not fetch restaurant settings from API, using defaults:', err);
-    }
-  }, []);
+  // 1. Live Restaurant Settings via React Query with 10s auto-polling
+  const settingsQuery = useQuery<RestaurantSettings>({
+    queryKey: ['restaurant-settings'],
+    queryFn: async () => {
+      const res = await apiRequest<{ settings: RestaurantSettings }>('/settings');
+      return (res as any)?.settings || res;
+    },
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
+  });
 
-  const fetchSocialLinks = useCallback(async () => {
-    try {
-      const res = await api.get('/social-links');
-      if (res.data?.socialLinks) {
-        setSocialLinks(res.data.socialLinks);
-      }
-    } catch (err) {
-      console.warn('Could not fetch social links from API:', err);
-    }
-  }, []);
+  // 2. Social Links query
+  const socialQuery = useQuery<{ socialLinks: SocialLink[] }>({
+    queryKey: ['social-links'],
+    queryFn: () => apiRequest<{ socialLinks: SocialLink[] }>('/social-links'),
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
 
+  // 3. Cross-tab live synchronization: when admin saves in one tab, all tabs refetch immediately
   useEffect(() => {
-    const init = async () => {
-      setIsLoading(true);
-      await Promise.all([fetchSettings(), fetchSocialLinks()]);
-      setIsLoading(false);
-    };
-    init();
-  }, [fetchSettings, fetchSocialLinks]);
+    const unsubscribe = subscribeToSync((type) => {
+      if (type === 'settings') {
+        queryClient.invalidateQueries({ queryKey: ['restaurant-settings'] });
+      } else if (type === 'menu') {
+        queryClient.invalidateQueries({ queryKey: ['menuItems'] });
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.invalidateQueries({ queryKey: ['chefSpecials'] });
+        queryClient.invalidateQueries({ queryKey: ['featuredItems'] });
+        queryClient.invalidateQueries({ queryKey: ['popularItems'] });
+        queryClient.invalidateQueries({ queryKey: ['restaurant-settings'] });
+      } else if (type === 'reviews') {
+        queryClient.invalidateQueries({ queryKey: ['publicReviews'] });
+      }
+    });
+    return unsubscribe;
+  }, [queryClient]);
+
+  const rawSettings = settingsQuery.data;
+  const settings = (rawSettings as any)?.settings || rawSettings || defaultSettings;
+  const socialLinks = socialQuery.data?.socialLinks || [];
+  const isLoading = settingsQuery.isLoading && !settingsQuery.data;
 
   return (
     <RestaurantContext.Provider
@@ -108,8 +96,8 @@ export const RestaurantProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         settings,
         socialLinks,
         isLoading,
-        refetchSettings: fetchSettings,
-        refetchSocialLinks: fetchSocialLinks,
+        refetchSettings: settingsQuery.refetch,
+        refetchSocialLinks: socialQuery.refetch,
       }}
     >
       {children}

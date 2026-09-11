@@ -23,24 +23,24 @@ export const AccountLayout: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Header with back link */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-bistro-border gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-bistro-border dark:border-charcoal-700 gap-4">
         <div>
           <Link
             to="/"
-            className="inline-flex items-center text-xs font-medium text-charcoal-500 hover:text-terracotta mb-2 transition-colors"
+            className="inline-flex items-center text-xs font-medium text-charcoal-500 dark:text-charcoal-400 hover:text-terracotta mb-2 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Return to Restaurant Website
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-charcoal">
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-charcoal dark:text-white">
             Welcome, {user?.name}
           </h1>
-          <p className="text-xs sm:text-sm text-charcoal-500 mt-1">
+          <p className="text-xs sm:text-sm text-charcoal-500 dark:text-charcoal-400 mt-1">
             Manage your past dining experiences, active deliveries, and account preferences.
           </p>
         </div>
         <button
           onClick={logout}
-          className="inline-flex items-center text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md border border-red-200 transition-colors w-fit"
+          className="inline-flex items-center text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:border-red-800/50 dark:text-red-400 dark:hover:bg-red-900/40 px-3 py-1.5 rounded-md border border-red-200 transition-colors w-fit"
         >
           <LogOut className="w-3.5 h-3.5 mr-1.5" /> Sign Out
         </button>
@@ -49,7 +49,7 @@ export const AccountLayout: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar Nav */}
         <div className="lg:col-span-1">
-          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible space-x-2 lg:space-x-0 lg:space-y-1 bg-white p-2 sm:p-3 rounded-xl border border-bistro-border shadow-soft">
+          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible space-x-2 lg:space-x-0 lg:space-y-1 bg-white dark:bg-charcoal-800 p-2 sm:p-3 rounded-xl border border-bistro-border dark:border-charcoal-700 shadow-soft">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const active = isCurrent(item.path);
@@ -60,7 +60,7 @@ export const AccountLayout: React.FC = () => {
                   className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-bistro whitespace-nowrap ${
                     active
                       ? 'bg-terracotta text-white shadow-sm'
-                      : 'text-charcoal-700 hover:bg-bistro-bg hover:text-terracotta'
+                      : 'text-charcoal-700 dark:text-charcoal-200 hover:bg-bistro-bg dark:hover:bg-charcoal-700 hover:text-terracotta'
                   }`}
                 >
                   <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-charcoal-400'}`} />

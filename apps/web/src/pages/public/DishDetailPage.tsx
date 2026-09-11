@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { FoodImage } from '../../components/ui/FoodImage';
 import { useCart } from '../../context/CartContext';
 import {
   ArrowLeft,
@@ -34,17 +35,15 @@ export const DishDetailPage: React.FC = () => {
   const dish = data?.item;
   const related = data?.relatedItems || [];
 
-  // When dish loads, select first variant by default if variants exist
+  // When dish loads, select first AVAILABLE variant by default
   useEffect(() => {
     if (dish && dish.variants && dish.variants.length > 0) {
-      setSelectedVariant(dish.variants[0]);
+      const firstAvailable = dish.variants.find((v) => v.isAvailable !== false) || null;
+      setSelectedVariant(firstAvailable);
     } else {
       setSelectedVariant(null);
     }
   }, [dish]);
-
-  const fallbackImage =
-    'https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=800&q=80';
 
   if (isLoading) {
     return (
@@ -67,8 +66,8 @@ export const DishDetailPage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-        <h2 className="text-xl font-serif font-bold text-charcoal mb-2">Item Not Found</h2>
-        <p className="text-xs text-charcoal-500 mb-6">
+        <h2 className="text-xl font-serif font-bold text-charcoal dark:text-charcoal-100 mb-2">Item Not Found</h2>
+        <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mb-6">
           The menu item you are looking for may have been removed or does not exist.
         </p>
         <Link to="/menu">
@@ -89,23 +88,21 @@ export const DishDetailPage: React.FC = () => {
       <div>
         <Link
           to="/menu"
-          className="inline-flex items-center text-xs font-semibold text-charcoal-600 hover:text-terracotta transition-colors"
+          className="inline-flex items-center text-xs font-semibold text-charcoal-600 dark:text-charcoal-300 hover:text-terracotta dark:hover:text-terracotta transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to Full Menu
         </Link>
       </div>
 
       {/* Main Dish Details Card */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start bg-white p-6 sm:p-8 rounded-2xl border border-bistro-border shadow-soft">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start bg-white dark:bg-charcoal-850 p-6 sm:p-8 rounded-2xl border border-bistro-border dark:border-charcoal-700 shadow-soft">
         {/* Dish Hero Image */}
-        <div className="md:col-span-6 relative rounded-xl overflow-hidden bg-charcoal-100 h-72 sm:h-96 shadow-md">
-          <img
-            src={dish.imageUrl || fallbackImage}
+        <div className="md:col-span-6 relative rounded-xl overflow-hidden bg-charcoal-100 dark:bg-charcoal-800 h-72 sm:h-96 shadow-md">
+          <FoodImage
+            src={dish.imageUrl}
             alt={dish.name}
+            category={dish.category?.name}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = fallbackImage;
-            }}
           />
           <div className="absolute top-4 left-4 flex flex-col gap-1.5">
             {dish.isChefSpecial && <Badge variant="terracotta">Chef Special</Badge>}
@@ -131,35 +128,37 @@ export const DishDetailPage: React.FC = () => {
                 {formatCurrency(currentUnitPrice)}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-charcoal dark:text-charcoal-100 leading-tight">
               {dish.name}
             </h1>
           </div>
 
-          <p className="text-xs sm:text-sm text-charcoal-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-charcoal-600 dark:text-charcoal-300 leading-relaxed">
             {dish.description}
           </p>
 
-          {/* Variant Selector */}
-          {dish.variants && dish.variants.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-bistro-border">
-              <label className="block text-xs font-bold text-charcoal">
-                Select Size / Serving:
+          {/* Variant Selector — only shows enabled variants */}
+          {dish.variants && dish.variants.filter((v) => v.isAvailable !== false).length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-bistro-border dark:border-charcoal-700">
+              <label className="block text-xs font-bold text-charcoal dark:text-charcoal-200">
+                Choose an Option:
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {dish.variants.map((v) => (
+                {dish.variants
+                  .filter((v) => v.isAvailable !== false)
+                  .map((v) => (
                   <button
                     key={v.id || v.name}
                     type="button"
                     onClick={() => setSelectedVariant(v)}
                     className={`p-2.5 rounded-lg border text-center transition-all ${
                       selectedVariant?.name === v.name
-                        ? 'border-terracotta bg-terracotta-50/70 text-terracotta font-bold shadow-sm'
-                        : 'border-bistro-border hover:bg-bistro-bg text-charcoal-700'
+                        ? 'border-terracotta bg-terracotta/10 text-terracotta font-bold shadow-sm'
+                        : 'border-bistro-border dark:border-charcoal-700 hover:bg-bistro-bg dark:hover:bg-charcoal-800 text-charcoal-700 dark:text-charcoal-200'
                     }`}
                   >
-                    <div className="text-xs">{v.name}</div>
-                    <div className="text-[11px] text-charcoal-500 font-medium">
+                    <div className="text-xs font-semibold">{v.name}</div>
+                    <div className="text-[11px] text-charcoal-500 dark:text-charcoal-400 font-medium mt-0.5">
                       {formatCurrency(v.price)}
                     </div>
                   </button>
@@ -174,7 +173,7 @@ export const DishDetailPage: React.FC = () => {
               {dish.tags.map((t, idx) => (
                 <span
                   key={idx}
-                  className="bg-bistro-bg text-charcoal-700 text-xs px-2.5 py-1 rounded-md border border-bistro-border font-medium"
+                  className="bg-bistro-bg dark:bg-charcoal-800 text-charcoal-700 dark:text-charcoal-300 text-xs px-2.5 py-1 rounded-md border border-bistro-border dark:border-charcoal-700 font-medium"
                 >
                   {t}
                 </span>
@@ -184,14 +183,14 @@ export const DishDetailPage: React.FC = () => {
 
           {/* Ingredients */}
           {dish.ingredients && dish.ingredients.length > 0 && (
-            <div className="bg-bistro-bg/70 p-4 rounded-xl border border-bistro-border space-y-2">
-              <h4 className="text-xs font-bold text-charcoal uppercase tracking-wider flex items-center gap-1.5">
+            <div className="bg-bistro-bg/70 dark:bg-charcoal-800/70 p-4 rounded-xl border border-bistro-border dark:border-charcoal-700 space-y-2">
+              <h4 className="text-xs font-bold text-charcoal dark:text-charcoal-200 uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-terracotta" /> Fresh Ingredients
               </h4>
-              <ul className="grid grid-cols-2 gap-2 text-xs text-charcoal-700">
+              <ul className="grid grid-cols-2 gap-2 text-xs text-charcoal-700 dark:text-charcoal-300">
                 {dish.ingredients.map((ing, idx) => (
                   <li key={idx} className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-500 flex-shrink-0" />
                     <span>{ing}</span>
                   </li>
                 ))}
@@ -200,21 +199,21 @@ export const DishDetailPage: React.FC = () => {
           )}
 
           {/* Ordering Controls */}
-          <div className="pt-4 border-t border-bistro-border space-y-4">
+          <div className="pt-4 border-t border-bistro-border dark:border-charcoal-700 space-y-4">
             <div className="flex items-center gap-4">
-              <div className="flex items-center border border-bistro-border rounded-lg bg-bistro-bg p-1">
+              <div className="flex items-center border border-bistro-border dark:border-charcoal-700 rounded-lg bg-bistro-bg dark:bg-charcoal-800 p-1">
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-1.5 text-charcoal-600 hover:text-charcoal-900 rounded transition-colors"
+                  className="p-1.5 text-charcoal-600 dark:text-charcoal-300 hover:text-charcoal-900 dark:hover:text-charcoal-100 rounded transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="px-5 font-bold text-sm text-charcoal">{quantity}</span>
+                <span className="px-5 font-bold text-sm text-charcoal dark:text-charcoal-100">{quantity}</span>
                 <button
                   type="button"
                   onClick={() => setQuantity(quantity + 1)}
-                  className="p-1.5 text-charcoal-600 hover:text-charcoal-900 rounded transition-colors"
+                  className="p-1.5 text-charcoal-600 dark:text-charcoal-300 hover:text-charcoal-900 dark:hover:text-charcoal-100 rounded transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -240,25 +239,23 @@ export const DishDetailPage: React.FC = () => {
       {/* Related Dishes From Same Category */}
       {related.length > 0 && (
         <div className="space-y-6 pt-6">
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-charcoal">
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-charcoal dark:text-charcoal-100">
             More From {dish.category?.name || 'Our Menu'}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {related.map((rel) => (
               <Link key={rel.id} to={`/menu/${rel.id}`} className="group">
                 <Card hoverEffect className="p-0 overflow-hidden h-full flex flex-col">
-                  <div className="h-36 overflow-hidden bg-charcoal-100">
-                    <img
-                      src={rel.imageUrl || fallbackImage}
+                  <div className="h-36 overflow-hidden bg-charcoal-100 dark:bg-charcoal-800">
+                    <FoodImage
+                      src={rel.imageUrl}
                       alt={rel.name}
+                      category={rel.category?.name}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = fallbackImage;
-                      }}
                     />
                   </div>
                   <div className="p-4 flex-1 flex flex-col justify-between">
-                    <h3 className="font-serif font-bold text-sm text-charcoal group-hover:text-terracotta transition-colors line-clamp-1">
+                    <h3 className="font-serif font-bold text-sm text-charcoal dark:text-charcoal-100 group-hover:text-terracotta transition-colors line-clamp-1">
                       {rel.name}
                     </h3>
                     <p className="text-xs font-bold text-terracotta mt-1">

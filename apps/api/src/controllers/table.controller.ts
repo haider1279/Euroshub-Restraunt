@@ -1,5 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../prisma';
+import { getTableAvailability } from '../services/table.service';
+
+export const getTableAvailabilityHandler = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { date } = req.query;
+    const targetDate = typeof date === 'string' ? new Date(date) : undefined;
+    const availability = await getTableAvailability(targetDate);
+    return res.json({ availability });
+  } catch (err) {
+    next(err);
+  }
+};
 
 export const getActiveTables = async (_req: Request, res: Response, next: NextFunction) => {
   try {

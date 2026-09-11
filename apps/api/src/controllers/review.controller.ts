@@ -5,18 +5,35 @@ import { validateReviewEligibility } from '../services/review.service';
 
 export const getPublicReviews = async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const reviews = await prisma.review.findMany({
-      where: { isHidden: false },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-      include: {
-        customer: {
-          select: { name: true },
+    const [reviews, stats] = await Promise.all([
+      prisma.review.findMany({
+        where: { isHidden: false },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: {
+          customer: {
+            select: { name: true },
+          },
+          order: {
+            select: { orderNumber: true },
+          },
         },
-      },
-    });
+      }),
+      prisma.review.aggregate({
+        where: { isHidden: false },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+    ]);
 
-    return res.json({ reviews });
+    const averageRating = stats._avg.rating ? Number(stats._avg.rating.toFixed(1)) : null;
+    const totalReviews = stats._count.rating;
+
+    return res.json({
+      reviews,
+      averageRating,
+      totalReviews,
+    });
   } catch (err) {
     next(err);
   }

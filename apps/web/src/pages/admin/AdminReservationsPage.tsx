@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { RefreshCcw, CalendarCheck, Users, Phone, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../utils/date';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -98,9 +99,7 @@ export default function AdminReservationsPage() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center gap-1.5 text-stone-600">
                     <CalendarCheck className="w-3.5 h-3.5 text-terracotta flex-shrink-0" />
-                    <span>{new Date(r.date).toLocaleDateString('en-GB', {
-                      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-                    })}</span>
+                    <span>{formatDate(r.date)}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-stone-600">
                     <Users className="w-3.5 h-3.5 text-terracotta flex-shrink-0" />

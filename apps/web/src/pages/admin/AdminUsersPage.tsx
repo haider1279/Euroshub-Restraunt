@@ -6,6 +6,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Button } from '../../components/ui/Button';
 import { Search, Users, ShieldCheck, UserCircle } from 'lucide-react';
+import { formatDate } from '../../utils/date';
 
 export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
@@ -114,9 +115,7 @@ export default function AdminUsersPage() {
                         </Badge>
                       </td>
                       <td className="px-5 py-3 text-stone-400 text-xs">
-                        {new Date(user.createdAt).toLocaleDateString('en-GB', {
-                          day: 'numeric', month: 'short', year: 'numeric',
-                        })}
+                        {formatDate(user.createdAt)}
                       </td>
                     </tr>
                   ))}

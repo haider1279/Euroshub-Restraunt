@@ -7,6 +7,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Star, MessageSquareQuote, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { formatDate } from '../../utils/date';
 
 export const CustomerReviewsPage: React.FC = () => {
   const { data, isLoading, isError, refetch } = useQuery({
@@ -18,9 +19,9 @@ export const CustomerReviewsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="pb-4 border-b border-bistro-border">
-        <h2 className="text-xl font-serif font-bold text-charcoal">My Reviews</h2>
-        <p className="text-xs text-charcoal-500 mt-0.5">
+      <div className="pb-4 border-b border-bistro-border dark:border-charcoal-700">
+        <h2 className="text-xl font-serif font-bold text-charcoal dark:text-charcoal-100">My Reviews</h2>
+        <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-0.5">
           Feedback and ratings you have shared for completed dining orders.
         </p>
       </div>
@@ -57,26 +58,24 @@ export const CustomerReviewsPage: React.FC = () => {
                     <Star
                       key={i}
                       className={`w-4 h-4 ${
-                        i < rev.rating ? 'fill-current text-amber-500' : 'text-charcoal-200'
+                        i < rev.rating ? 'fill-current text-amber-500' : 'text-charcoal-200 dark:text-charcoal-700'
                       }`}
                     />
                   ))}
-                  <span className="ml-2 font-bold text-xs text-charcoal">{rev.rating}/5</span>
+                  <span className="ml-2 font-bold text-xs text-charcoal dark:text-charcoal-100">{rev.rating}/5</span>
                 </div>
-                <span className="text-[11px] text-charcoal-400">
-                  {new Date(rev.createdAt).toLocaleDateString('en-US', {
-                    dateStyle: 'medium',
-                  })}
+                <span className="text-[11px] text-charcoal-400 dark:text-charcoal-500">
+                  {formatDate(rev.createdAt)}
                 </span>
               </div>
 
-              <p className="text-xs sm:text-sm text-charcoal-700 italic leading-relaxed">
+              <p className="text-xs sm:text-sm text-charcoal-700 dark:text-charcoal-300 italic leading-relaxed">
                 "{rev.comment}"
               </p>
 
               {rev.order && (
-                <div className="pt-2 border-t border-bistro-border text-[11px] text-charcoal-500">
-                  Associated Order: <span className="font-mono font-medium text-charcoal-700">{rev.order.orderNumber}</span>
+                <div className="pt-2 border-t border-bistro-border dark:border-charcoal-700 text-[11px] text-charcoal-500 dark:text-charcoal-400">
+                  Associated Order: <span className="font-mono font-medium text-charcoal-700 dark:text-charcoal-300">{rev.order.orderNumber}</span>
                 </div>
               )}
             </Card>

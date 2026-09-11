@@ -12,8 +12,6 @@ interface AuthContextType {
   register: (data: { email: string; password: string; name: string; phone?: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  loginAsAdmin: () => Promise<void>;
-  loginAsCustomer: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,14 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginAsAdmin = async () => {
-    await login('admin@euroshubkitchen.com', 'AdminPassword123!');
-  };
-
-  const loginAsCustomer = async () => {
-    await login('marco.rossi@example.com', 'Customer123!');
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -104,8 +94,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         refreshUser,
-        loginAsAdmin,
-        loginAsCustomer,
       }}
     >
       {children}

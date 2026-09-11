@@ -25,5 +25,6 @@ export const updateSettingsSchema = z.object({
   deliveryEnabled: z.boolean().optional(),
   deliveryFee: z.number().min(0).optional(),
   tableCount: z.number().int().min(1).max(200).optional(),
+  signatureMenuItemId: z.string().optional().nullable(),
   reservationSettings: z.any().optional().nullable(),
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '../../utils/cn';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'danger';
@@ -20,7 +21,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-md transition-bistro focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none';
+    'inline-flex items-center justify-center font-medium rounded-md transition-bistro focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none dark:focus:ring-offset-charcoal-900';
 
   const sizeStyles = {
     sm: 'text-xs px-3 py-1.5 gap-1.5',
@@ -32,20 +33,20 @@ export const Button: React.FC<ButtonProps> = ({
     primary:
       'bg-terracotta text-white hover:bg-terracotta-600 active:bg-terracotta-700 focus:ring-terracotta shadow-soft',
     secondary:
-      'bg-charcoal-800 text-white hover:bg-charcoal-900 active:bg-black focus:ring-charcoal shadow-soft',
+      'bg-charcoal-800 text-white hover:bg-charcoal-900 active:bg-black focus:ring-charcoal shadow-soft dark:bg-charcoal-700 dark:hover:bg-charcoal-600',
     outline:
-      'border border-bistro-border bg-white text-charcoal-800 hover:bg-bistro-bg hover:border-charcoal-300 focus:ring-terracotta',
+      'border border-bistro-border bg-white text-charcoal-800 hover:bg-bistro-bg hover:border-charcoal-300 focus:ring-terracotta dark:bg-charcoal-800 dark:text-charcoal-100 dark:border-charcoal-700 dark:hover:bg-charcoal-700 dark:hover:border-charcoal-600',
     ghost:
-      'bg-transparent text-charcoal-700 hover:bg-charcoal-100 hover:text-charcoal-900 focus:ring-charcoal',
+      'bg-transparent text-charcoal-700 hover:bg-charcoal-100 hover:text-charcoal-900 focus:ring-charcoal dark:text-charcoal-300 dark:hover:bg-charcoal-800 dark:hover:text-white',
     destructive:
-      'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-soft',
+      'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-soft dark:bg-red-700 dark:hover:bg-red-600',
     danger:
-      'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-soft',
+      'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-soft dark:bg-red-700 dark:hover:bg-red-600',
   };
 
   return (
     <button
-      className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
+      className={cn(baseStyles, sizeStyles[size], variantStyles[variant], className)}
       disabled={disabled || isLoading}
       {...props}
     >

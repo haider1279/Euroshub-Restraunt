@@ -75,6 +75,7 @@ model MenuItem {
   variants      ProductVariant[]
   addonLinks    ProductAddonLink[]
   orderItems    OrderItem[]
+  signatureInSettings RestaurantSettings[] @relation("RestaurantSignatureItem")
   deletedAt     DateTime?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
@@ -230,6 +231,8 @@ model RestaurantSettings {
   deliveryEnabled     Boolean  @default(false)
   deliveryFee         Decimal  @db.Decimal(10, 2) @default(0)
   tableCount          Int      @default(100)
+  signatureMenuItemId String?
+  signatureMenuItem   MenuItem? @relation("RestaurantSignatureItem", fields: [signatureMenuItemId], references: [id], onDelete: SetNull)
   reservationSettings Json?
   footerText          String?
   updatedAt           DateTime @updatedAt

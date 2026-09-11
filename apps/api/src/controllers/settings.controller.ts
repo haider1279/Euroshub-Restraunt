@@ -5,10 +5,23 @@ export const getSettings = async (_req: Request, res: Response, next: NextFuncti
   try {
     const settings = await prisma.restaurantSettings.findUnique({
       where: { id: 'singleton' },
+      include: {
+        signatureMenuItem: {
+          include: {
+            variants: { orderBy: { sortOrder: 'asc' } },
+            category: true,
+          },
+        },
+      },
     });
 
     if (!settings) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Restaurant settings not found.' } });
+    }
+
+    // If signature menu item was deleted, treat as null
+    if (settings.signatureMenuItem && settings.signatureMenuItem.deletedAt) {
+      settings.signatureMenuItem = null;
     }
 
     return res.json({ settings });
@@ -24,7 +37,20 @@ export const updateSettings = async (req: Request, res: Response, next: NextFunc
       const settings = await prisma.restaurantSettings.update({
         where: { id: 'singleton' },
         data: req.body,
+        include: {
+          signatureMenuItem: {
+            include: {
+              variants: { orderBy: { sortOrder: 'asc' } },
+              category: true,
+            },
+          },
+        },
       });
+
+      if (settings.signatureMenuItem && settings.signatureMenuItem.deletedAt) {
+        settings.signatureMenuItem = null;
+      }
+
       return res.json({ settings });
     }
 

@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/Button';
 import { Search, Filter, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { formatDate } from '../../utils/date';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -173,9 +174,7 @@ export default function AdminOrdersPage() {
                         <Badge variant={STATUS_BADGE[order.status] as any} size="sm">{order.status}</Badge>
                       </td>
                       <td className="px-5 py-3 text-stone-500 text-xs">
-                        {new Date(order.createdAt).toLocaleDateString('en-GB', {
-                          day: 'numeric', month: 'short', year: 'numeric',
-                        })}
+                        {formatDate(order.createdAt)}
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-1.5 flex-wrap">

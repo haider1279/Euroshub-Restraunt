@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ArrowLeft, Phone, MapPin, UtensilsCrossed, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate, formatLongDateTime } from '../../utils/date';
 
 const STATUS_BADGE: Record<string, string> = {
   PENDING: 'warning',
@@ -83,9 +84,7 @@ export default function AdminOrderDetailPage() {
         <div>
           <h1 className="text-3xl font-serif font-bold text-charcoal">#{order.orderNumber}</h1>
           <p className="text-stone-500 mt-1">
-            {new Date(order.createdAt).toLocaleDateString('en-GB', {
-              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-            })}
+            {formatLongDateTime(order.createdAt)}
           </p>
         </div>
         <Badge variant={STATUS_BADGE[order.status] as any} size="lg">{order.status}</Badge>

@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Star, Eye, EyeOff, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../utils/date';
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -94,9 +95,7 @@ export default function AdminReviewsPage() {
                     </div>
                     <p className="text-sm text-stone-600 mb-2 leading-relaxed">"{review.comment}"</p>
                     <div className="flex gap-3 text-xs text-stone-400">
-                      <span>{new Date(review.createdAt).toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'short', year: 'numeric',
-                      })}</span>
+                      <span>{formatDate(review.createdAt)}</span>
                       {review.order && (
                         <span>· Order #{review.order.orderNumber}</span>
                       )}

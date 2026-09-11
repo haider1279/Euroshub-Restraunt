@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Eye,
 } from 'lucide-react';
+import { FoodImage } from '../../components/ui/FoodImage';
 
 export const MenuPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -100,21 +101,19 @@ export const MenuPage: React.FC = () => {
 
   const openDishModal = (dish: MenuItem) => {
     setSelectedDish(dish);
-    setSelectedVariant(dish.variants && dish.variants.length > 0 ? dish.variants[0] : null);
+    const availableVariants = (dish.variants || []).filter((v) => v.isAvailable !== false);
+    setSelectedVariant(availableVariants.length > 0 ? availableVariants[0] : null);
     setModalQuantity(1);
   };
-
-  const fallbackImage =
-    'https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=800&q=80';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
       {/* Header Banner */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <h1 className="text-3xl sm:text-5xl font-serif font-bold text-charcoal tracking-tight">
+        <h1 className="text-3xl sm:text-5xl font-serif font-bold text-charcoal dark:text-charcoal-100 tracking-tight">
           Our Fast-Food Menu
         </h1>
-        <p className="text-xs sm:text-sm text-charcoal-600 leading-relaxed">
+        <p className="text-xs sm:text-sm text-charcoal-600 dark:text-charcoal-300 leading-relaxed">
           Pizzas loaded with cheese, gourmet beef and chicken burgers, toasted club sandwiches, and crispy sides.
           Prepared fresh daily at Kohistan Tower, Saddar, Rawalpindi.
         </p>
@@ -127,7 +126,7 @@ export const MenuPage: React.FC = () => {
           className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-bistro ${
             activeCategory === 'ALL'
               ? 'bg-terracotta text-white shadow-md'
-              : 'bg-white text-charcoal-700 hover:bg-bistro-bg border border-bistro-border'
+              : 'bg-white dark:bg-charcoal-800 text-charcoal-700 dark:text-charcoal-200 hover:bg-bistro-bg dark:hover:bg-charcoal-700 border border-bistro-border dark:border-charcoal-700'
           }`}
         >
           All Items ({rawItems.length})
@@ -139,7 +138,7 @@ export const MenuPage: React.FC = () => {
             className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-bistro ${
               activeCategory === cat.id
                 ? 'bg-terracotta text-white shadow-md'
-                : 'bg-white text-charcoal-700 hover:bg-bistro-bg border border-bistro-border'
+                : 'bg-white dark:bg-charcoal-800 text-charcoal-700 dark:text-charcoal-200 hover:bg-bistro-bg dark:hover:bg-charcoal-700 border border-bistro-border dark:border-charcoal-700'
             }`}
           >
             {cat.name}
@@ -148,7 +147,7 @@ export const MenuPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-bistro-border shadow-soft flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="bg-white dark:bg-charcoal-850 p-4 rounded-xl border border-bistro-border dark:border-charcoal-700 shadow-soft flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Search Input */}
         <div className="w-full md:w-80">
           <Input
@@ -164,7 +163,7 @@ export const MenuPage: React.FC = () => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="w-full text-xs px-3 py-2.5 bg-bistro-bg rounded-md border border-bistro-border text-charcoal font-medium focus:outline-none focus:ring-1 focus:ring-terracotta"
+            className="w-full text-xs px-3 py-2.5 bg-bistro-bg dark:bg-charcoal-800 rounded-md border border-bistro-border dark:border-charcoal-700 text-charcoal dark:text-charcoal-100 font-medium focus:outline-none focus:ring-1 focus:ring-terracotta"
           >
             <option value="DEFAULT">Sort By: Recommended</option>
             <option value="PRICE_ASC">Price: Low to High</option>
@@ -203,25 +202,25 @@ export const MenuPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map((dish) => {
-            const hasVariants = dish.variants && dish.variants.length > 0;
-            const minPrice = hasVariants ? dish.variants![0].price : dish.price;
-            const maxPrice = hasVariants ? dish.variants![dish.variants!.length - 1].price : dish.price;
-            const hasMultiplePrices = hasVariants && dish.variants!.length > 1;
+            const availableVariants = (dish.variants || []).filter((v) => v.isAvailable !== false);
+            const hasVariants = availableVariants.length > 0;
+            const minPrice = hasVariants
+              ? Math.min(...availableVariants.map((v) => Number(v.price)))
+              : Number(dish.price);
+            const hasMultiplePrices = hasVariants && availableVariants.length > 1;
 
             return (
               <Card key={dish.id} hoverEffect className="flex flex-col h-full overflow-hidden p-0">
                 {/* Dish Thumbnail */}
                 <div
-                  className="relative h-48 sm:h-52 overflow-hidden bg-charcoal-100 cursor-pointer group"
+                  className="relative h-48 sm:h-52 overflow-hidden bg-charcoal-100 dark:bg-charcoal-800 cursor-pointer group"
                   onClick={() => openDishModal(dish)}
                 >
-                  <img
-                    src={dish.imageUrl || fallbackImage}
+                  <FoodImage
+                    src={dish.imageUrl}
                     alt={dish.name}
+                    category={dish.category?.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = fallbackImage;
-                    }}
                   />
                   <div className="absolute top-3 left-3 flex flex-col gap-1">
                     {dish.isChefSpecial && <Badge variant="terracotta">Chef Special</Badge>}
@@ -242,7 +241,7 @@ export const MenuPage: React.FC = () => {
                     <div className="flex justify-between items-baseline mb-1">
                       <button
                         onClick={() => openDishModal(dish)}
-                        className="text-left font-serif font-bold text-base text-charcoal hover:text-terracotta transition-colors line-clamp-1"
+                        className="text-left font-serif font-bold text-base text-charcoal dark:text-charcoal-100 hover:text-terracotta dark:hover:text-terracotta transition-colors line-clamp-1"
                       >
                         {dish.name}
                       </button>
@@ -250,7 +249,7 @@ export const MenuPage: React.FC = () => {
                         {hasMultiplePrices ? `From ${formatCurrency(minPrice)}` : formatCurrency(minPrice)}
                       </span>
                     </div>
-                    <p className="text-xs text-charcoal-500 line-clamp-2 mb-3 leading-relaxed">
+                    <p className="text-xs text-charcoal-500 dark:text-charcoal-400 line-clamp-2 mb-3 leading-relaxed">
                       {dish.description}
                     </p>
 
@@ -260,7 +259,7 @@ export const MenuPage: React.FC = () => {
                         {dish.variants!.map((v) => (
                           <span
                             key={v.id || v.name}
-                            className="bg-bistro-bg text-charcoal-600 text-[10px] px-2 py-0.5 rounded border border-bistro-border"
+                            className="bg-bistro-bg dark:bg-charcoal-800 text-charcoal-600 dark:text-charcoal-300 text-[10px] px-2 py-0.5 rounded border border-bistro-border dark:border-charcoal-700"
                           >
                             {v.name}: {formatCurrency(v.price)}
                           </span>
@@ -269,10 +268,10 @@ export const MenuPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-bistro-border flex items-center justify-between">
+                  <div className="pt-3 border-t border-bistro-border dark:border-charcoal-700 flex items-center justify-between">
                     <Link
                       to={`/menu/${dish.id}`}
-                      className="text-xs font-medium text-charcoal-600 hover:text-terracotta transition-colors flex items-center gap-1"
+                      className="text-xs font-medium text-charcoal-600 dark:text-charcoal-300 hover:text-terracotta dark:hover:text-terracotta transition-colors flex items-center gap-1"
                     >
                       <Eye className="w-3.5 h-3.5" /> View Details
                     </Link>
@@ -283,7 +282,7 @@ export const MenuPage: React.FC = () => {
                       onClick={() => openDishModal(dish)}
                       leftIcon={<Plus className="w-3.5 h-3.5" />}
                     >
-                      {hasVariants && dish.variants!.length > 1 ? 'Choose Size' : 'Add to Cart'}
+                      {hasVariants && availableVariants.length > 1 ? 'Choose Option' : 'Add to Cart'}
                     </Button>
                   </div>
                 </div>
@@ -302,14 +301,12 @@ export const MenuPage: React.FC = () => {
           maxWidth="lg"
         >
           <div className="space-y-4">
-            <div className="relative h-56 sm:h-64 rounded-lg overflow-hidden bg-charcoal-100">
-              <img
-                src={selectedDish.imageUrl || fallbackImage}
+            <div className="relative h-56 sm:h-64 rounded-lg overflow-hidden bg-charcoal-100 dark:bg-charcoal-800">
+              <FoodImage
+                src={selectedDish.imageUrl}
                 alt={selectedDish.name}
+                category={selectedDish.category?.name}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = fallbackImage;
-                }}
               />
               <div className="absolute top-3 right-3">
                 <span className="bg-charcoal-900/80 text-terracotta font-bold text-lg px-3 py-1 rounded-md backdrop-blur-sm border border-charcoal-700">
@@ -320,30 +317,32 @@ export const MenuPage: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs sm:text-sm text-charcoal-700 leading-relaxed">
+            <p className="text-xs sm:text-sm text-charcoal-700 dark:text-charcoal-300 leading-relaxed">
               {selectedDish.description}
             </p>
 
-            {/* Variant / Size Selector */}
-            {selectedDish.variants && selectedDish.variants.length > 0 && (
-              <div className="space-y-2 pt-2 border-t border-bistro-border">
-                <label className="block text-xs font-bold text-charcoal">
-                  Select Size / Variant:
+            {/* Variant / Option Selector — only available variants */}
+            {selectedDish.variants && selectedDish.variants.filter((v) => v.isAvailable !== false).length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-bistro-border dark:border-charcoal-700">
+                <label className="block text-xs font-bold text-charcoal dark:text-charcoal-200">
+                  Choose an Option:
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {selectedDish.variants.map((v) => (
+                  {selectedDish.variants
+                    .filter((v) => v.isAvailable !== false)
+                    .map((v) => (
                     <button
                       key={v.id || v.name}
                       type="button"
                       onClick={() => setSelectedVariant(v)}
                       className={`p-2.5 rounded-lg border text-center transition-all ${
                         selectedVariant?.name === v.name
-                          ? 'border-terracotta bg-terracotta-50/70 text-terracotta font-bold'
-                          : 'border-bistro-border hover:bg-bistro-bg text-charcoal-700'
+                          ? 'border-terracotta bg-terracotta/10 text-terracotta font-bold'
+                          : 'border-bistro-border dark:border-charcoal-700 hover:bg-bistro-bg dark:hover:bg-charcoal-800 text-charcoal-700 dark:text-charcoal-200'
                       }`}
                     >
-                      <div className="text-xs">{v.name}</div>
-                      <div className="text-[11px] text-charcoal-500 font-medium">
+                      <div className="text-xs font-semibold">{v.name}</div>
+                      <div className="text-[11px] text-charcoal-500 dark:text-charcoal-400 font-medium mt-0.5">
                         {formatCurrency(v.price)}
                       </div>
                     </button>
@@ -353,21 +352,21 @@ export const MenuPage: React.FC = () => {
             )}
 
             {/* Modal Actions */}
-            <div className="pt-4 border-t border-bistro-border flex items-center justify-between gap-4">
+            <div className="pt-4 border-t border-bistro-border dark:border-charcoal-700 flex items-center justify-between gap-4">
               {/* Stepper */}
-              <div className="flex items-center border border-bistro-border rounded-lg p-1 bg-bistro-bg">
+              <div className="flex items-center border border-bistro-border dark:border-charcoal-700 rounded-lg p-1 bg-bistro-bg dark:bg-charcoal-800">
                 <button
                   type="button"
                   onClick={() => setModalQuantity(Math.max(1, modalQuantity - 1))}
-                  className="p-1.5 text-charcoal-600 hover:text-charcoal-900 rounded"
+                  className="p-1.5 text-charcoal-600 dark:text-charcoal-300 hover:text-charcoal-900 dark:hover:text-charcoal-100 rounded"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="px-4 font-bold text-xs text-charcoal">{modalQuantity}</span>
+                <span className="px-4 font-bold text-xs text-charcoal dark:text-charcoal-100">{modalQuantity}</span>
                 <button
                   type="button"
                   onClick={() => setModalQuantity(modalQuantity + 1)}
-                  className="p-1.5 text-charcoal-600 hover:text-charcoal-900 rounded"
+                  className="p-1.5 text-charcoal-600 dark:text-charcoal-300 hover:text-charcoal-900 dark:hover:text-charcoal-100 rounded"
                 >
                   <Plus className="w-4 h-4" />
                 </button>

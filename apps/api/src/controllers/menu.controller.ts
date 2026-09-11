@@ -440,3 +440,141 @@ export const deleteCategory = async (req: Request, res: Response, next: NextFunc
     next(err);
   }
 };
+
+export const getMenuItemVariants = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const item = await prisma.menuItem.findUnique({
+      where: { id },
+      include: { variants: { orderBy: { sortOrder: 'asc' } } },
+    });
+    if (!item) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Menu item not found.' } });
+    }
+    return res.json({ variants: item.variants });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const createVariant = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const item = await prisma.menuItem.findUnique({ where: { id } });
+    if (!item) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Menu item not found.' } });
+    }
+
+    const trimmedName = req.body.name.trim();
+
+    // Check for duplicate variant name for this menu item (case-insensitive)
+    const duplicate = await prisma.productVariant.findFirst({
+      where: {
+        productId: id,
+        name: { equals: trimmedName, mode: 'insensitive' },
+      },
+    });
+
+    if (duplicate) {
+      return res.status(400).json({
+        error: {
+          code: 'DUPLICATE_VARIANT_NAME',
+          message: `An option named "${trimmedName}" already exists for "${item.name}".`,
+        },
+      });
+    }
+
+    let sortOrder = req.body.sortOrder;
+    if (sortOrder === undefined) {
+      const highestSort = await prisma.productVariant.findFirst({
+        where: { productId: id },
+        orderBy: { sortOrder: 'desc' },
+      });
+      sortOrder = highestSort ? highestSort.sortOrder + 1 : 1;
+    }
+
+    const variant = await prisma.productVariant.create({
+      data: {
+        productId: id,
+        name: trimmedName,
+        price: Number(req.body.price),
+        sortOrder: Number(sortOrder),
+        isAvailable: req.body.isAvailable !== undefined ? Boolean(req.body.isAvailable) : true,
+      },
+    });
+
+    return res.status(201).json({ variant });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateVariant = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { variantId } = req.params;
+    const existing = await prisma.productVariant.findUnique({ where: { id: variantId } });
+    if (!existing) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Variant option not found.' } });
+    }
+
+    const updateData: any = {};
+
+    if (req.body.name !== undefined) {
+      const trimmedName = req.body.name.trim();
+      // Check for duplicate name on the same item
+      const duplicate = await prisma.productVariant.findFirst({
+        where: {
+          productId: existing.productId,
+          name: { equals: trimmedName, mode: 'insensitive' },
+          id: { not: variantId },
+        },
+      });
+      if (duplicate) {
+        return res.status(400).json({
+          error: {
+            code: 'DUPLICATE_VARIANT_NAME',
+            message: `Another option named "${trimmedName}" already exists for this menu item.`,
+          },
+        });
+      }
+      updateData.name = trimmedName;
+    }
+
+    if (req.body.price !== undefined) {
+      updateData.price = Number(req.body.price);
+    }
+
+    if (req.body.sortOrder !== undefined) {
+      updateData.sortOrder = Number(req.body.sortOrder);
+    }
+
+    if (req.body.isAvailable !== undefined) {
+      updateData.isAvailable = Boolean(req.body.isAvailable);
+    }
+
+    const variant = await prisma.productVariant.update({
+      where: { id: variantId },
+      data: updateData,
+    });
+
+    return res.json({ variant });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteVariant = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { variantId } = req.params;
+    const existing = await prisma.productVariant.findUnique({ where: { id: variantId } });
+    if (!existing) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Variant option not found.' } });
+    }
+
+    await prisma.productVariant.delete({ where: { id: variantId } });
+    return res.json({ message: 'Option deleted successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};
+

@@ -5,7 +5,7 @@ export const createMenuItemSchema = z.object({
   description: z.string().min(5, 'Description must be at least 5 characters'),
   price: z.number().nonnegative('Price must be non-negative').default(0),
   categoryId: z.string().min(1, 'Valid category ID is required'),
-  imageUrl: z.string().url().optional().nullable().or(z.literal('')),
+  imageUrl: z.string().optional().nullable().or(z.literal('')),
   ingredients: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
   isAvailable: z.boolean().default(true),
@@ -32,3 +32,13 @@ export const createCategorySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(60),
   sortOrder: z.number().int().default(0),
 });
+
+export const createVariantSchema = z.object({
+  name: z.string().min(1, 'Option name is required').max(60),
+  price: z.number().nonnegative('Price must be non-negative'),
+  sortOrder: z.number().int().optional().default(0),
+  isAvailable: z.boolean().optional().default(true),
+});
+
+export const updateVariantSchema = createVariantSchema.partial();
+

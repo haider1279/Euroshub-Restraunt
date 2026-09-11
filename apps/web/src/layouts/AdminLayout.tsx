@@ -38,7 +38,7 @@ export const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F2ED] text-charcoal flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#F5F2ED] text-charcoal flex flex-col md:flex-row dark:bg-charcoal-950 dark:text-charcoal-100">
       {/* Mobile Top Header */}
       <div className="md:hidden bg-charcoal-900 text-white p-4 flex items-center justify-between border-b border-charcoal-800">
         <div className="flex items-center space-x-2">
@@ -140,9 +140,9 @@ export const AdminLayout: React.FC = () => {
       {/* Main Admin Workspace */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Workspace Top Header Bar */}
-        <header className="hidden md:flex bg-white border-b border-bistro-border px-8 py-3.5 items-center justify-between shadow-soft">
-          <div className="flex items-center space-x-2 text-xs text-charcoal-500">
-            <span className="font-semibold text-charcoal-800">Euroshub Kitchen</span>
+        <header className="hidden md:flex bg-white border-b border-bistro-border px-8 py-3.5 items-center justify-between shadow-soft dark:bg-charcoal-900 dark:border-charcoal-800">
+          <div className="flex items-center space-x-2 text-xs text-charcoal-500 dark:text-charcoal-400">
+            <span className="font-semibold text-charcoal-800 dark:text-charcoal-200">Euroshub Kitchen</span>
             <span>/</span>
             <span>Admin Console</span>
             <span>/</span>
@@ -151,7 +151,7 @@ export const AdminLayout: React.FC = () => {
             </span>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="flex items-center gap-2 bg-bistro-bg px-3 py-1 rounded-full border border-bistro-border text-xs text-charcoal-700">
+            <div className="flex items-center gap-2 bg-bistro-bg px-3 py-1 rounded-full border border-bistro-border text-xs text-charcoal-700 dark:bg-charcoal-800 dark:border-charcoal-700 dark:text-charcoal-300">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span>Live Database Connected</span>
             </div>

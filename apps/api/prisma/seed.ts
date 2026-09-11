@@ -138,10 +138,10 @@ async function main() {
 
   // Category: Pizza
   // 1. BBQ Pizza
-  await prisma.menuItem.create({
+  const bbqPizza = await prisma.menuItem.create({
     data: {
       name: 'BBQ Pizza',
-      description: 'Fresh-baked pizza topped with smoky BBQ chicken, diced red onions, and melted mozzarella cheese.',
+      description: 'Hand-tossed pizza topped with smoky BBQ chicken, diced red onions, and melted mozzarella over rich pizza sauce.',
       price: 700,
       imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop&q=80',
       ingredients: ['Pizza Dough', 'BBQ Chicken', 'BBQ Sauce', 'Mozzarella', 'Red Onions'],
@@ -158,6 +158,12 @@ async function main() {
         ],
       },
     },
+  });
+
+  // Set default initial signature item in restaurant settings
+  await prisma.restaurantSettings.update({
+    where: { id: 'singleton' },
+    data: { signatureMenuItemId: bbqPizza.id },
   });
 
   // 2. Hot & Spicy Pizza

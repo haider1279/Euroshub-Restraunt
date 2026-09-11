@@ -8,6 +8,7 @@ import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { RestaurantProvider } from './context/RestaurantContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,23 +24,25 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <RestaurantProvider>
-            <CartProvider>
-              <App />
-              <Toaster
-                position="top-right"
-                richColors
-                closeButton
-                toastOptions={{
-                  style: {
-                    fontFamily: 'Inter, system-ui, sans-serif',
-                  },
-                }}
-              />
-            </CartProvider>
-          </RestaurantProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <RestaurantProvider>
+              <CartProvider>
+                <App />
+                <Toaster
+                  position="top-right"
+                  richColors
+                  closeButton
+                  toastOptions={{
+                    style: {
+                      fontFamily: 'Inter, system-ui, sans-serif',
+                    },
+                  }}
+                />
+              </CartProvider>
+            </RestaurantProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>

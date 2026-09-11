@@ -115,7 +115,7 @@ export const OrderDetailPage: React.FC = () => {
       <div>
         <Link
           to="/account/orders"
-          className="inline-flex items-center text-xs font-semibold text-charcoal-600 hover:text-terracotta transition-colors"
+          className="inline-flex items-center text-xs font-semibold text-charcoal-600 dark:text-charcoal-400 hover:text-terracotta transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1" /> Back to All Orders
         </Link>
@@ -123,15 +123,15 @@ export const OrderDetailPage: React.FC = () => {
 
       {/* Header Info Banner */}
       <Card className="p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-bistro-border gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-bistro-border dark:border-charcoal-700 gap-3">
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="font-mono font-bold text-xl text-charcoal">{order.orderNumber}</h2>
+              <h2 className="font-mono font-bold text-xl text-charcoal dark:text-charcoal-100">{order.orderNumber}</h2>
               <Badge variant={order.status.toLowerCase() as any} dot>
                 {order.status}
               </Badge>
             </div>
-            <p className="text-xs text-charcoal-500 mt-1">
+            <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-1">
               Placed on{' '}
               {new Date(order.createdAt).toLocaleString('en-US', {
                 dateStyle: 'full',
@@ -142,7 +142,7 @@ export const OrderDetailPage: React.FC = () => {
 
           <div className="flex items-center space-x-3">
             {!isTerminal && (
-              <div className="flex items-center gap-1.5 text-xs text-olive font-medium bg-olive-50 px-2.5 py-1 rounded-full border border-olive-200">
+              <div className="flex items-center gap-1.5 text-xs text-olive dark:text-olive-400 font-medium bg-olive-50 dark:bg-olive-900/20 px-2.5 py-1 rounded-full border border-olive-200 dark:border-olive-800">
                 <span className="w-2 h-2 rounded-full bg-olive animate-pulse" />
                 <span>Live Kitchen Updates Polling</span>
               </div>
@@ -171,16 +171,16 @@ export const OrderDetailPage: React.FC = () => {
         {/* Itemized list (7 cols) */}
         <div className="md:col-span-7 space-y-4">
           <Card className="p-6 space-y-4">
-            <h3 className="font-serif font-bold text-base text-charcoal pb-3 border-b border-bistro-border">
+            <h3 className="font-serif font-bold text-base text-charcoal dark:text-charcoal-100 pb-3 border-b border-bistro-border dark:border-charcoal-700">
               Purchased Items Snapshot
             </h3>
 
-            <div className="divide-y divide-bistro-border">
+            <div className="divide-y divide-bistro-border dark:divide-charcoal-700">
               {order.items.map((item) => (
                 <div key={item.id} className="py-3 flex justify-between items-center text-xs">
                   <div>
-                    <span className="font-bold text-charcoal text-sm">{item.quantity}×</span>{' '}
-                    <span className="font-medium text-charcoal-800 text-sm ml-1.5">
+                    <span className="font-bold text-charcoal dark:text-charcoal-100 text-sm">{item.quantity}×</span>{' '}
+                    <span className="font-medium text-charcoal-800 dark:text-charcoal-200 text-sm ml-1.5">
                       {item.nameAtPurchase}
                     </span>
                     {item.variantNameAtPurchase && (
@@ -188,30 +188,30 @@ export const OrderDetailPage: React.FC = () => {
                         {item.variantNameAtPurchase}
                       </span>
                     )}
-                    <span className="block text-charcoal-400 text-[11px] mt-0.5">
+                    <span className="block text-charcoal-400 dark:text-charcoal-500 text-[11px] mt-0.5">
                       {formatCurrency(item.priceAtPurchase)} each (Immutable price at checkout)
                     </span>
                   </div>
-                  <span className="font-bold text-charcoal-900 text-sm">
+                  <span className="font-bold text-charcoal-900 dark:text-charcoal-100 text-sm">
                     {formatCurrency(Number(item.priceAtPurchase) * item.quantity)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-3 border-t border-bistro-border space-y-2 text-xs">
-              <div className="flex justify-between text-charcoal-600">
+            <div className="pt-3 border-t border-bistro-border dark:border-charcoal-700 space-y-2 text-xs">
+              <div className="flex justify-between text-charcoal-600 dark:text-charcoal-400">
                 <span>Subtotal</span>
-                <span className="font-semibold text-charcoal-900">{formatCurrency(order.subtotal)}</span>
+                <span className="font-semibold text-charcoal-900 dark:text-charcoal-100">{formatCurrency(order.subtotal)}</span>
               </div>
               {Number(order.deliveryFee) > 0 && (
-                <div className="flex justify-between text-charcoal-600">
+                <div className="flex justify-between text-charcoal-600 dark:text-charcoal-400">
                   <span>Delivery Fee</span>
-                  <span className="font-semibold text-charcoal-900">{formatCurrency(order.deliveryFee)}</span>
+                  <span className="font-semibold text-charcoal-900 dark:text-charcoal-100">{formatCurrency(order.deliveryFee)}</span>
                 </div>
               )}
-              <div className="pt-2 border-t border-bistro-border flex justify-between items-baseline text-sm">
-                <span className="font-bold text-charcoal">Total Amount (PKR)</span>
+              <div className="pt-2 border-t border-bistro-border dark:border-charcoal-700 flex justify-between items-baseline text-sm">
+                <span className="font-bold text-charcoal dark:text-charcoal-100">Total Amount (PKR)</span>
                 <span className="text-xl font-serif font-bold text-terracotta">
                   {formatCurrency(order.total)}
                 </span>
@@ -221,7 +221,7 @@ export const OrderDetailPage: React.FC = () => {
 
           {/* Customer review if already submitted */}
           {order.review && (
-            <Card className="p-5 bg-terracotta-50/20 border-terracotta-200 space-y-2">
+            <Card className="p-5 bg-terracotta-50/20 dark:bg-terracotta/10 border-terracotta-200 dark:border-terracotta/30 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-terracotta uppercase tracking-wider">
                   Your Review on this Order
@@ -232,7 +232,7 @@ export const OrderDetailPage: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <p className="text-xs text-charcoal-700 italic">"{order.review.comment}"</p>
+              <p className="text-xs text-charcoal-700 dark:text-charcoal-300 italic">"{order.review.comment}"</p>
             </Card>
           )}
         </div>
@@ -240,14 +240,14 @@ export const OrderDetailPage: React.FC = () => {
         {/* Fulfillment Details (5 cols) */}
         <div className="md:col-span-5 space-y-4">
           <Card className="p-6 space-y-4 text-xs">
-            <h3 className="font-serif font-bold text-base text-charcoal pb-3 border-b border-bistro-border">
+            <h3 className="font-serif font-bold text-base text-charcoal dark:text-charcoal-100 pb-3 border-b border-bistro-border dark:border-charcoal-700">
               Fulfillment Information
             </h3>
 
             <div className="space-y-3">
               <div>
-                <span className="text-charcoal-400 block mb-0.5">Order Type:</span>
-                <span className="font-semibold text-charcoal-900 capitalize flex items-center gap-1.5">
+                <span className="text-charcoal-400 dark:text-charcoal-500 block mb-0.5">Order Type:</span>
+                <span className="font-semibold text-charcoal-900 dark:text-charcoal-200 capitalize flex items-center gap-1.5">
                   {order.type === 'DELIVERY' && <Truck className="w-4 h-4 text-terracotta" />}
                   {order.type === 'DINE_IN' && <Utensils className="w-4 h-4 text-terracotta" />}
                   {order.type === 'TAKEAWAY' && <ShoppingBag className="w-4 h-4 text-terracotta" />}
@@ -257,26 +257,26 @@ export const OrderDetailPage: React.FC = () => {
 
               {order.deliveryAddress && (
                 <div>
-                  <span className="text-charcoal-400 block mb-0.5">Delivery Address:</span>
-                  <span className="font-medium text-charcoal-900">{order.deliveryAddress}</span>
+                  <span className="text-charcoal-400 dark:text-charcoal-500 block mb-0.5">Delivery Address:</span>
+                  <span className="font-medium text-charcoal-900 dark:text-charcoal-200">{order.deliveryAddress}</span>
                 </div>
               )}
 
               {order.tableNumber && (
                 <div>
-                  <span className="text-charcoal-400 block mb-0.5">Table Assignment:</span>
+                  <span className="text-charcoal-400 dark:text-charcoal-500 block mb-0.5">Table Assignment:</span>
                   <span className="font-bold text-terracotta text-sm">Table #{order.tableNumber}</span>
                 </div>
               )}
 
               <div>
-                <span className="text-charcoal-400 block mb-0.5">Contact Telephone:</span>
-                <span className="font-medium text-charcoal-900">{order.contactPhone}</span>
+                <span className="text-charcoal-400 dark:text-charcoal-500 block mb-0.5">Contact Telephone:</span>
+                <span className="font-medium text-charcoal-900 dark:text-charcoal-200">{order.contactPhone}</span>
               </div>
 
               <div>
-                <span className="text-charcoal-400 block mb-0.5">Payment Method:</span>
-                <span className="font-semibold text-charcoal-900">
+                <span className="text-charcoal-400 dark:text-charcoal-500 block mb-0.5">Payment Method:</span>
+                <span className="font-semibold text-charcoal-900 dark:text-charcoal-200">
                   {order.paymentMethod === 'PAY_AT_RESTAURANT' ? 'Pay at Counter / Table' : order.paymentMethod}
                 </span>
               </div>
@@ -293,7 +293,7 @@ export const OrderDetailPage: React.FC = () => {
       >
         <form onSubmit={handleReviewSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-charcoal-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-charcoal-700 dark:text-charcoal-300 uppercase tracking-wider mb-2">
               Star Rating
             </label>
             <div className="flex items-center space-x-2">
@@ -306,7 +306,7 @@ export const OrderDetailPage: React.FC = () => {
                 >
                   <Star
                     className={`w-7 h-7 ${
-                      star <= rating ? 'text-amber-500 fill-current' : 'text-charcoal-200'
+                      star <= rating ? 'text-amber-500 fill-current' : 'text-charcoal-200 dark:text-charcoal-700'
                     }`}
                   />
                 </button>

@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
-import { Lock, Mail, ShieldAlert, Sparkles, UserCheck } from 'lucide-react';
+import { Lock, Mail, ShieldAlert } from 'lucide-react';
 
 const loginFormSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -19,17 +19,15 @@ type LoginFormData = z.infer<typeof loginFormSchema>;
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginAsAdmin, loginAsCustomer } = useAuth();
+  const { login } = useAuth();
 
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   const from = (location.state as any)?.from?.pathname || '/account';
 
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
@@ -49,32 +47,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleAdminDemo = async () => {
-    setAuthError(null);
-    setIsDemoLoading(true);
-    try {
-      await loginAsAdmin();
-      navigate('/admin', { replace: true });
-    } catch (err: any) {
-      setAuthError(err.message || 'Demo login failed.');
-    } finally {
-      setIsDemoLoading(false);
-    }
-  };
-
-  const handleCustomerDemo = async () => {
-    setAuthError(null);
-    setIsDemoLoading(true);
-    try {
-      await loginAsCustomer();
-      navigate(from, { replace: true });
-    } catch (err: any) {
-      setAuthError(err.message || 'Demo login failed.');
-    } finally {
-      setIsDemoLoading(false);
-    }
-  };
-
   return (
     <div className="max-w-md mx-auto px-4 py-12 sm:py-20 space-y-6">
       <div className="text-center space-y-2">
@@ -87,39 +59,6 @@ export const LoginPage: React.FC = () => {
         <p className="text-xs text-charcoal-500">
           Access your order timeline, reservations, and profile.
         </p>
-      </div>
-
-      {/* 1-Click Demo Evaluation Box */}
-      <div className="bg-terracotta-50/70 border border-terracotta-200 rounded-xl p-4 space-y-2.5">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-terracotta-800">
-          <Sparkles className="w-4 h-4 text-terracotta" />
-          <span>One-Click Demo Authentication</span>
-        </div>
-        <p className="text-[11px] text-charcoal-600">
-          Click below to test instantly with pre-seeded credentials:
-        </p>
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleCustomerDemo}
-            isLoading={isDemoLoading}
-            leftIcon={<UserCheck className="w-3.5 h-3.5 text-terracotta" />}
-          >
-            Customer Demo
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={handleAdminDemo}
-            isLoading={isDemoLoading}
-            leftIcon={<Lock className="w-3.5 h-3.5 text-terracotta" />}
-          >
-            Admin Demo
-          </Button>
-        </div>
       </div>
 
       {/* Main Login Card */}
@@ -135,7 +74,7 @@ export const LoginPage: React.FC = () => {
           <Input
             label="Email Address"
             type="email"
-            placeholder="admin@euroshubkitchen.com"
+            placeholder="your@email.com"
             error={errors.email?.message}
             leftIcon={<Mail className="w-4 h-4" />}
             {...register('email')}
