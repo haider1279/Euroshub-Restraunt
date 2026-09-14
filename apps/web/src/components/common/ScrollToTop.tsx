@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 /**
  * Scrolls the window to the top whenever the pathname or search changes.
- * Fixes the "category pills open at bottom of /menu" bug.
+ * Fixess the "category pills open at bottom of /menu" bug.
  */
 export const ScrollToTop: React.FC = () => {
   const { pathname, search } = useLocation();
