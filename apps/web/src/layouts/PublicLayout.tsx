@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useRestaurant } from '../context/RestaurantContext';
 import { useTheme } from '../context/ThemeContext';
 import { HorseLogo } from '../components/ui/HorseLogo';
+import { resolveImageUrl } from '../components/ui/FoodImage';
 import {
   ShoppingBag,
   User,
@@ -88,7 +89,7 @@ export const PublicLayout: React.FC = () => {
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="w-11 h-11 rounded-xl bg-charcoal flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-105 border border-charcoal-800">
               {settings.logoUrl ? (
-                <img src={settings.logoUrl} alt={settings.name} className="w-8 h-8 object-contain rounded-lg" />
+                <img src={resolveImageUrl(settings.logoUrl)} alt={settings.name} className="w-8 h-8 object-contain rounded-lg" />
               ) : (
                 <HorseLogo className="w-7 h-7 text-white" />
               )}
@@ -250,7 +251,7 @@ export const PublicLayout: React.FC = () => {
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-terracotta flex items-center justify-center text-white shadow-md">
                 {settings.logoUrl ? (
-                  <img src={settings.logoUrl} alt={settings.name} className="w-7 h-7 object-contain" />
+                  <img src={resolveImageUrl(settings.logoUrl)} alt={settings.name} className="w-7 h-7 object-contain" />
                 ) : (
                   <HorseLogo className="w-6 h-6 text-white" />
                 )}

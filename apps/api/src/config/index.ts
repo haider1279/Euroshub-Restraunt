@@ -16,4 +16,13 @@ export const config = {
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
   databaseUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgrespassword@localhost:5432/euroshub_kitchen?schema=public',
+  supabase: {
+    url: process.env.SUPABASE_URL || 'https://jcmfppoqbqkdkjwkvulm.supabase.co',
+    serviceRoleKey:
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbWZwcG9xYnFrZGtqd2t2dWxtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4OTA0NzEyNywiZXhwIjoyMTA0NjIzMTI3fQ.UY9omlGOWvumP8TQoeD7-_5ao7A4rS5fg3DkLK32Enc',
+    storageBucketProducts: process.env.SUPABASE_STORAGE_BUCKET_PRODUCTS || 'product-images',
+    storageBucketLogo: process.env.SUPABASE_STORAGE_BUCKET_LOGO || 'logo',
+  },
 };

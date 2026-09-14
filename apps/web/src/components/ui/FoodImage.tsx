@@ -19,6 +19,10 @@ export function resolveImageUrl(src?: string | null): string {
   if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
     return clean;
   }
+  if (clean.startsWith('/uploads/')) {
+    const filename = clean.replace(/^\/uploads\//, '');
+    return `https://jcmfppoqbqkdkjwkvulm.supabase.co/storage/v1/object/public/product-images/${filename}`;
+  }
   const rawApiUrl = (((import.meta as any).env?.VITE_API_URL || (import.meta as any).env?.VITE_API_BASE || '') as string).trim();
   const apiUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '');
   if (apiUrl && clean.startsWith('/')) {

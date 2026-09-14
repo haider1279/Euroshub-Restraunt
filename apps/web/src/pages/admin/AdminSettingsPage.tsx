@@ -5,6 +5,7 @@ import { RestaurantSettings, SocialLink, MenuItem } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { broadcastSync } from '../../utils/sync';
 import { Button } from '../../components/ui/Button';
+import { resolveImageUrl } from '../../components/ui/FoodImage';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -271,7 +272,7 @@ export default function AdminSettingsPage() {
               <div className="flex items-center gap-4 p-3.5 bg-stone-50 rounded-xl border border-stone-200">
                 {selectedSignatureItem.imageUrl ? (
                   <img
-                    src={selectedSignatureItem.imageUrl}
+                    src={resolveImageUrl(selectedSignatureItem.imageUrl)}
                     alt={selectedSignatureItem.name}
                     className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                   />

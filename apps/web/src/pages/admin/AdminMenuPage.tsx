@@ -6,6 +6,7 @@ import { formatCurrency } from '../../utils/currency';
 import { broadcastSync } from '../../utils/sync';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { resolveImageUrl } from '../../components/ui/FoodImage';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
@@ -406,7 +407,7 @@ export default function AdminMenuPage() {
     >
       <div className="relative">
         {item.imageUrl ? (
-          <img src={item.imageUrl} alt={item.name} className="w-full h-36 object-cover" />
+          <img src={resolveImageUrl(item.imageUrl)} alt={item.name} className="w-full h-36 object-cover" />
         ) : (
           <div className="w-full h-36 bg-stone-100 flex items-center justify-center text-stone-400 text-sm font-medium">
             <ImageIcon className="w-6 h-6 mr-1.5 opacity-60" /> No Image Set
@@ -699,7 +700,7 @@ export default function AdminMenuPage() {
             <div className="flex items-center gap-3">
               {imagePreview ? (
                 <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-stone-200 flex-shrink-0 bg-stone-100">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img src={resolveImageUrl(imagePreview)} alt="Preview" className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => {
