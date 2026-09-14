@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { prisma } from '../prisma';
 import { AuthRequest, OrderStatus } from '../types';
 import { generateOrderNumber, isValidStatusTransition, ALLOWED_STATUS_TRANSITIONS } from '../services/order.service';
@@ -106,14 +107,14 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
     }
 
     // 3. Compute pricing server-side using current DB prices (never trust client)
-    let subtotalDecimal = new Prisma.Decimal(0);
+    let subtotalDecimal = new Decimal(0);
     const preparedOrderItems: Array<{
       menuItemId: string;
       variantId?: string | null;
       nameAtPurchase: string;
       variantNameAtPurchase?: string | null;
-      priceAtPurchase: Prisma.Decimal;
-      addonsSnapshot?: Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput;
+      priceAtPurchase: Decimal;
+      addonsSnapshot?: Prisma.JsonValue | null;
       quantity: number;
     }> = [];
 
@@ -121,7 +122,7 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
       const dbItem = dbItemMap.get(itemReq.menuItemId)!;
 
       // Determine variant pricing & snapshot
-      let unitPrice: Prisma.Decimal;
+      let unitPrice: Decimal;
       let variantName: string | null = null;
       let matchedVariantId: string | null = null;
 
@@ -143,36 +144,36 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
             },
           });
         }
-        unitPrice = new Prisma.Decimal(matchedVariant.price);
+        unitPrice = new Decimal(matchedVariant.price);
         variantName = matchedVariant.name;
         matchedVariantId = matchedVariant.id;
       } else if (dbItem.variants && dbItem.variants.length > 0) {
         // Fallback to first available variant if client didn't specify variantId
         const defaultVariant = dbItem.variants.find((v) => v.isAvailable) || dbItem.variants[0];
-        unitPrice = new Prisma.Decimal(defaultVariant.price);
+        unitPrice = new Decimal(defaultVariant.price);
         variantName = defaultVariant.name;
         matchedVariantId = defaultVariant.id;
       } else {
-        unitPrice = new Prisma.Decimal(dbItem.price);
+        unitPrice = new Decimal(dbItem.price);
       }
 
       // Addons processing
-      let addonsSum = new Prisma.Decimal(0);
+      let addonsSum = new Decimal(0);
       let addonsSnapshot: Array<{ id: string; name: string; price: number }> | null = null;
 
       if (itemReq.addonIds && Array.isArray(itemReq.addonIds) && itemReq.addonIds.length > 0) {
         const validAddons = dbItem.addonLinks
-          .map((al) => al.addon)
-          .filter((a) => itemReq.addonIds.includes(a.id) && a.isAvailable);
+          .map((al: { addon: { id: string; name: string; price: unknown; isAvailable: boolean } }) => al.addon)
+          .filter((a: { id: string; name: string; price: unknown; isAvailable: boolean }) => itemReq.addonIds.includes(a.id) && a.isAvailable);
 
         if (validAddons.length > 0) {
-          addonsSnapshot = validAddons.map((a) => ({
+          addonsSnapshot = validAddons.map((a: { id: string; name: string; price: unknown; isAvailable: boolean }) => ({
             id: a.id,
             name: a.name,
             price: Number(a.price),
           }));
-          for (const a of validAddons) {
-            addonsSum = addonsSum.add(new Prisma.Decimal(a.price));
+          for (const a of validAddons as Array<{ id: string; name: string; price: unknown; isAvailable: boolean }>) {
+            addonsSum = addonsSum.add(new Decimal(Number(a.price)));
           }
         }
       }
@@ -187,15 +188,15 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
         nameAtPurchase: dbItem.name,
         variantNameAtPurchase: variantName,
         priceAtPurchase: totalItemUnitPrice,
-        addonsSnapshot: addonsSnapshot ? (addonsSnapshot as unknown as Prisma.InputJsonValue) : Prisma.JsonNull,
+        addonsSnapshot: addonsSnapshot ? (addonsSnapshot as unknown as Prisma.JsonValue) : null,
         quantity: itemReq.quantity,
       });
     }
 
     const deliveryFeeDecimal =
       type === 'DELIVERY' && settings
-        ? new Prisma.Decimal(settings.deliveryFee)
-        : new Prisma.Decimal(0);
+        ? new Decimal(Number(settings.deliveryFee))
+        : new Decimal(0);
 
     const totalDecimal = subtotalDecimal.add(deliveryFeeDecimal);
     const orderNumber = await generateOrderNumber();
@@ -216,7 +217,7 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
         contactPhone,
         paymentMethod: paymentMethod || 'PAY_AT_RESTAURANT',
         items: {
-          create: preparedOrderItems,
+          create: preparedOrderItems as any,
         },
       },
       include: {

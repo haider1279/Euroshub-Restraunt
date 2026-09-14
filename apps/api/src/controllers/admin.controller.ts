@@ -46,7 +46,7 @@ export const getAdminCustomers = async (req: Request, res: Response, next: NextF
     ]);
 
     const customers = users.map((u) => {
-      const lifetimeSpend = u.orders.reduce((sum, o) => sum + Number(o.total), 0);
+      const lifetimeSpend = u.orders.reduce((sum: number, o: { total: unknown }) => sum + Number(o.total), 0);
       return {
         id: u.id,
         name: u.name,
@@ -105,7 +105,7 @@ export const getAdminCustomerById = async (req: Request, res: Response, next: Ne
 
     const lifetimeSpend = user.orders
       .filter((o) => o.status === 'COMPLETED')
-      .reduce((sum, o) => sum + Number(o.total), 0);
+      .reduce((sum: number, o: { total: unknown }) => sum + Number(o.total), 0);
 
     return res.json({
       customer: {
@@ -256,8 +256,9 @@ export const getAnalyticsRevenue = async (_req: Request, res: Response, next: Ne
         }
       }
 
-      if (typeBreakdown[order.type] !== undefined) {
-        typeBreakdown[order.type] += 1;
+      const orderType = order.type as keyof typeof typeBreakdown;
+      if (typeBreakdown[orderType] !== undefined) {
+        typeBreakdown[orderType] += 1;
       }
     }
 

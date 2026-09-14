@@ -158,7 +158,7 @@ export const getPopularItems = async (_req: Request, res: Response, next: NextFu
     });
 
     const popularIds = popularAggregation
-      .map((p) => p.menuItemId)
+      .map((p: { menuItemId: string | null }) => p.menuItemId)
       .filter((id): id is string => id !== null);
 
     if (popularIds.length === 0) {
@@ -179,7 +179,7 @@ export const getPopularItems = async (_req: Request, res: Response, next: NextFu
 
     // Sort matching the aggregation order
     const sorted = popularIds
-      .map((id) => items.find((i) => i.id === id))
+      .map((id: string) => items.find((i: typeof items[0]) => i.id === id))
       .filter((i): i is typeof items[0] => i !== undefined);
 
     return res.json({ items: sorted });

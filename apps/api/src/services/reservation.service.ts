@@ -63,7 +63,7 @@ export const validateReservationTimeAndCapacity = async (reservationDate: Date, 
     select: { partySize: true },
   });
 
-  const bookedCovers = existingReservations.reduce((sum, r) => sum + r.partySize, 0);
+  const bookedCovers = existingReservations.reduce((sum: number, r: { partySize: number }) => sum + r.partySize, 0);
 
   if (bookedCovers + partySize > maxCovers) {
     return {
