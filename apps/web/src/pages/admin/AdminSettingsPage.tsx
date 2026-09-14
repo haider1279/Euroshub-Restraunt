@@ -25,13 +25,13 @@ type SettingsForm = Omit<RestaurantSettings, 'id' | 'updatedAt' | 'openingHours'
 };
 
 const defaultHours: Record<string, { open: string; close: string; closed: boolean }> = {
-  monday: { open: '09:00', close: '23:00', closed: false },
-  tuesday: { open: '09:00', close: '23:00', closed: false },
-  wednesday: { open: '09:00', close: '23:00', closed: false },
-  thursday: { open: '09:00', close: '23:00', closed: false },
-  friday: { open: '09:00', close: '23:00', closed: false },
-  saturday: { open: '09:00', close: '23:00', closed: false },
-  sunday: { open: '09:00', close: '23:00', closed: false },
+  monday: { open: '09:00', close: '00:00', closed: false },
+  tuesday: { open: '09:00', close: '00:00', closed: false },
+  wednesday: { open: '09:00', close: '00:00', closed: false },
+  thursday: { open: '09:00', close: '00:00', closed: false },
+  friday: { open: '09:00', close: '00:00', closed: false },
+  saturday: { open: '09:00', close: '00:00', closed: false },
+  sunday: { open: '09:00', close: '00:00', closed: false },
 };
 
 export default function AdminSettingsPage() {
@@ -322,7 +322,7 @@ export default function AdminSettingsPage() {
           </h2>
           <div className="space-y-3">
             {DAYS.map((day) => {
-              const dayData = openingHours[day] || { open: '09:00', close: '12:00', closed: false };
+              const dayData = openingHours[day] || { open: '09:00', close: '00:00', closed: false };
               return (
                 <div key={day} className="flex items-center gap-3">
                   <span className="w-24 text-sm font-medium text-charcoal capitalize">{day}</span>

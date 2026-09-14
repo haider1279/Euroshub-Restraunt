@@ -55,13 +55,13 @@ export const updateSettings = async (req: Request, res: Response, next: NextFunc
     }
 
     const standardHours = {
-      monday: { open: '09:00', close: '12:00', closed: false },
-      tuesday: { open: '09:00', close: '12:00', closed: false },
-      wednesday: { open: '09:00', close: '12:00', closed: false },
-      thursday: { open: '09:00', close: '12:00', closed: false },
-      friday: { open: '09:00', close: '12:00', closed: false },
-      saturday: { open: '09:00', close: '12:00', closed: false },
-      sunday: { open: '09:00', close: '12:00', closed: false },
+      monday: { open: '09:00', close: '00:00', closed: false },
+      tuesday: { open: '09:00', close: '00:00', closed: false },
+      wednesday: { open: '09:00', close: '00:00', closed: false },
+      thursday: { open: '09:00', close: '00:00', closed: false },
+      friday: { open: '09:00', close: '00:00', closed: false },
+      saturday: { open: '09:00', close: '00:00', closed: false },
+      sunday: { open: '09:00', close: '00:00', closed: false },
     };
 
     const settings = await prisma.restaurantSettings.create({

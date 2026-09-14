@@ -55,15 +55,37 @@ export const ReservationPage: React.FC = () => {
     },
   });
 
-  // Operating Hours: Daily 9:00 AM – 12:00 PM
+  // Operating Hours: Daily 9:00 AM – 12:00 AM (Reservations accepted 09:00 to 23:00)
   const timeSlots = [
-    { value: '09:00', label: '09:00 AM — Morning Service' },
-    { value: '09:30', label: '09:30 AM — Morning Service' },
-    { value: '10:00', label: '10:00 AM — Mid-Morning' },
-    { value: '10:30', label: '10:30 AM — Mid-Morning' },
-    { value: '11:00', label: '11:00 AM — Early Lunch' },
-    { value: '11:30', label: '11:30 AM — Lunch' },
-    { value: '12:00', label: '12:00 PM — Midday Service' },
+    { value: '09:00', label: '09:00 AM' },
+    { value: '09:30', label: '09:30 AM' },
+    { value: '10:00', label: '10:00 AM' },
+    { value: '10:30', label: '10:30 AM' },
+    { value: '11:00', label: '11:00 AM' },
+    { value: '11:30', label: '11:30 AM' },
+    { value: '12:00', label: '12:00 PM' },
+    { value: '12:30', label: '12:30 PM' },
+    { value: '13:00', label: '01:00 PM' },
+    { value: '13:30', label: '01:30 PM' },
+    { value: '14:00', label: '02:00 PM' },
+    { value: '14:30', label: '02:30 PM' },
+    { value: '15:00', label: '03:00 PM' },
+    { value: '15:30', label: '03:30 PM' },
+    { value: '16:00', label: '04:00 PM' },
+    { value: '16:30', label: '04:30 PM' },
+    { value: '17:00', label: '05:00 PM' },
+    { value: '17:30', label: '05:30 PM' },
+    { value: '18:00', label: '06:00 PM' },
+    { value: '18:30', label: '06:30 PM' },
+    { value: '19:00', label: '07:00 PM' },
+    { value: '19:30', label: '07:30 PM' },
+    { value: '20:00', label: '08:00 PM' },
+    { value: '20:30', label: '08:30 PM' },
+    { value: '21:00', label: '09:00 PM' },
+    { value: '21:30', label: '09:30 PM' },
+    { value: '22:00', label: '10:00 PM' },
+    { value: '22:30', label: '10:30 PM' },
+    { value: '23:00', label: '11:00 PM' },
   ];
 
   const partySizeOptions = Array.from({ length: 12 }, (_, i) => ({
@@ -85,7 +107,8 @@ export const ReservationPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const fullDateStr = `${data.date}T${data.time}:00`;
+      // Anchor explicitly to Pakistan Standard Time (UTC+05:00, Asia/Karachi)
+      const fullDateStr = `${data.date}T${data.time}:00+05:00`;
       const reservationDate = new Date(fullDateStr);
 
       if (isNaN(reservationDate.getTime())) {
@@ -129,7 +152,7 @@ export const ReservationPage: React.FC = () => {
           Reserve a Table
         </h1>
         <p className="text-xs sm:text-sm text-charcoal-500 leading-relaxed">
-          100 tables available daily from 9:00 AM to 12:00 PM at Kohistan Tower, Saddar, Rawalpindi.
+          100 tables available daily from 9:00 AM to 12:00 AM at Kohistan Tower, Saddar, Rawalpindi.
         </p>
       </div>
 
@@ -205,7 +228,7 @@ export const ReservationPage: React.FC = () => {
               />
 
               <Select
-                label="Time Slot (Daily 9:00 AM – 12:00 PM) *"
+                label="Time Slot (Daily 9:00 AM – 11:00 PM) *"
                 options={timeSlots}
                 placeholder="Select Time"
                 error={errors.time?.message}
