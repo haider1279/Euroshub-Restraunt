@@ -1,5 +1,4 @@
 import { Response, NextFunction } from 'express';
-import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { prisma } from '../prisma';
 import { AuthRequest, OrderStatus } from '../types';
@@ -82,11 +81,11 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
       },
     });
 
-    const dbItemMap = new Map(dbMenuItems.map((item) => [item.id, item]));
+    const dbItemMap = new Map(dbMenuItems.map((item: any) => [item.id, item]));
 
     // Check all items exist and are available
     for (const itemReq of incomingItems) {
-      const dbItem = dbItemMap.get(itemReq.menuItemId);
+      const dbItem: any = dbItemMap.get(itemReq.menuItemId);
       if (!dbItem) {
         return res.status(400).json({
           error: {
@@ -114,12 +113,12 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
       nameAtPurchase: string;
       variantNameAtPurchase?: string | null;
       priceAtPurchase: Decimal;
-      addonsSnapshot?: Prisma.JsonValue | null;
+      addonsSnapshot?: any;
       quantity: number;
     }> = [];
 
     for (const itemReq of incomingItems) {
-      const dbItem = dbItemMap.get(itemReq.menuItemId)!;
+      const dbItem: any = dbItemMap.get(itemReq.menuItemId)!;
 
       // Determine variant pricing & snapshot
       let unitPrice: Decimal;
@@ -127,7 +126,7 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
       let matchedVariantId: string | null = null;
 
       if (itemReq.variantId) {
-        const matchedVariant = dbItem.variants.find((v) => v.id === itemReq.variantId);
+        const matchedVariant = dbItem.variants.find((v: any) => v.id === itemReq.variantId);
         if (!matchedVariant) {
           return res.status(400).json({
             error: {
@@ -149,7 +148,7 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
         matchedVariantId = matchedVariant.id;
       } else if (dbItem.variants && dbItem.variants.length > 0) {
         // Fallback to first available variant if client didn't specify variantId
-        const defaultVariant = dbItem.variants.find((v) => v.isAvailable) || dbItem.variants[0];
+        const defaultVariant = dbItem.variants.find((v: any) => v.isAvailable) || dbItem.variants[0];
         unitPrice = new Decimal(defaultVariant.price);
         variantName = defaultVariant.name;
         matchedVariantId = defaultVariant.id;
@@ -188,7 +187,7 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
         nameAtPurchase: dbItem.name,
         variantNameAtPurchase: variantName,
         priceAtPurchase: totalItemUnitPrice,
-        addonsSnapshot: addonsSnapshot ? (addonsSnapshot as unknown as Prisma.JsonValue) : null,
+        addonsSnapshot: addonsSnapshot ? (addonsSnapshot as any) : null,
         quantity: itemReq.quantity,
       });
     }

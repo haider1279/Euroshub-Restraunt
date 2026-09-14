@@ -45,7 +45,7 @@ export const getAdminCustomers = async (req: Request, res: Response, next: NextF
       prisma.user.count({ where }),
     ]);
 
-    const customers = users.map((u) => {
+    const customers = users.map((u: any) => {
       const lifetimeSpend = u.orders.reduce((sum: number, o: { total: unknown }) => sum + Number(o.total), 0);
       return {
         id: u.id,
@@ -104,7 +104,7 @@ export const getAdminCustomerById = async (req: Request, res: Response, next: Ne
     }
 
     const lifetimeSpend = user.orders
-      .filter((o) => o.status === 'COMPLETED')
+      .filter((o: any) => o.status === 'COMPLETED')
       .reduce((sum: number, o: { total: unknown }) => sum + Number(o.total), 0);
 
     return res.json({
@@ -200,7 +200,7 @@ export const getAnalyticsOverview = async (_req: Request, res: Response, next: N
       },
       recentOrders,
       recentReservations,
-      popularDishes: popularDishesRaw.map((p) => ({
+      popularDishes: popularDishesRaw.map((p: any) => ({
         menuItemId: p.menuItemId,
         name: p.nameAtPurchase,
         totalQuantity: p._sum.quantity || 0,
