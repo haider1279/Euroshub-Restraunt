@@ -1,7 +1,7 @@
 import { app } from './app';
 import { config } from './config';
 
-const server = app.listen(config.port, () => {
+const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`====================================================`);
   console.log(` EUROSHUB KITCHEN API SERVER RUNNING`);
   console.log(` Port:     ${config.port}`);
