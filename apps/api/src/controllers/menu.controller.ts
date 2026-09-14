@@ -451,7 +451,7 @@ export const getMenuItemVariants = async (req: Request, res: Response, next: Nex
     if (!item) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Menu item not found.' } });
     }
-    return res.json({ variants: item.variants });
+    return res.json({ variants: item.variants || [] });
   } catch (err) {
     next(err);
   }

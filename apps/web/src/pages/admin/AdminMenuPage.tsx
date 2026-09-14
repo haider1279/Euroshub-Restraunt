@@ -80,8 +80,15 @@ export default function AdminMenuPage() {
     refetch: refetchVariants,
   } = useQuery<ProductVariant[]>({
     queryKey: ['admin-variants', variantModalItem?.id],
-    queryFn: () =>
-      apiRequest<ProductVariant[]>(`/admin/menu-items/${variantModalItem!.id}/variants`),
+    queryFn: async () => {
+      const res = await apiRequest<{ variants: ProductVariant[] } | ProductVariant[]>(
+        `/admin/menu-items/${variantModalItem!.id}/variants`
+      );
+      if (Array.isArray(res)) {
+        return res;
+      }
+      return res?.variants || [];
+    },
     enabled: !!variantModalItem,
   });
 
@@ -321,9 +328,10 @@ export default function AdminMenuPage() {
     setEditingVariant(null);
     setVariantName('');
     setVariantPrice('');
+    const list = Array.isArray(variantModalVariants) ? variantModalVariants : [];
     const nextOrder =
-      variantModalVariants.length > 0
-        ? Math.max(...variantModalVariants.map((v) => v.sortOrder ?? 0)) + 1
+      list.length > 0
+        ? Math.max(...list.map((v) => v.sortOrder ?? 0)) + 1
         : 0;
     setVariantSortOrder(String(nextOrder));
     setVariantIsAvailable(true);
@@ -859,7 +867,7 @@ export default function AdminMenuPage() {
                 <div className="space-y-2">
                   {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 rounded-xl" />)}
                 </div>
-              ) : variantModalVariants.length === 0 ? (
+              ) : !Array.isArray(variantModalVariants) || variantModalVariants.length === 0 ? (
                 <div className="p-8 bg-stone-50 border border-dashed border-stone-300 rounded-xl text-center">
                   <Layers className="w-8 h-8 text-stone-300 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-stone-500">No options configured yet</p>
@@ -944,7 +952,7 @@ export default function AdminMenuPage() {
               )}
             </div>
 
-            {variantModalVariants.length > 0 && (
+            {Array.isArray(variantModalVariants) && variantModalVariants.length > 0 && (
               <p className="text-[11px] text-stone-400 leading-relaxed">
                 <strong>Tip:</strong> Customers see all enabled options and must choose one.
                 Disabling hides from customers without deleting.
