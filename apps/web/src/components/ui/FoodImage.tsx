@@ -19,9 +19,10 @@ export function resolveImageUrl(src?: string | null): string {
   if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
     return clean;
   }
-  const apiUrl = ((import.meta as any).env?.VITE_API_URL as string) || '';
+  const rawApiUrl = (((import.meta as any).env?.VITE_API_URL || (import.meta as any).env?.VITE_API_BASE || '') as string).trim();
+  const apiUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '');
   if (apiUrl && clean.startsWith('/')) {
-    return `${apiUrl.replace(/\/$/, '')}${clean}`;
+    return `${apiUrl}${clean}`;
   }
   return clean;
 }

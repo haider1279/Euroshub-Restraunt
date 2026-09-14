@@ -1,4 +1,13 @@
-const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+function getApiBase(): string {
+  const envUrl = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || '').trim();
+  if (!envUrl) {
+    return '/api';
+  }
+  const cleanUrl = envUrl.replace(/\/+$/, '');
+  return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+}
+
+const API_BASE = getApiBase();
 
 export class ApiError extends Error {
   code: string;

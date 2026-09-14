@@ -23,6 +23,7 @@ app.set('trust proxy', 1);
 
 const allowedOrigins = [
   config.frontendUrl,
+  'https://euroshub-restraunt-web.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
@@ -32,7 +33,12 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      const isAllowed =
+        allowedOrigins.indexOf(origin) !== -1 ||
+        origin === 'https://euroshub-restraunt-web.vercel.app' ||
+        origin.endsWith('.vercel.app') ||
+        process.env.NODE_ENV !== 'production';
+      if (isAllowed) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy'));
