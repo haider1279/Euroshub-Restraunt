@@ -47,7 +47,7 @@ export const getZonedTimeParts = (date: Date, timeZone: string = 'Asia/Karachi')
 export const validateReservationTimeAndCapacity = async (reservationDate: Date, partySize: number) => {
   const now = new Date();
   if (reservationDate.getTime() < now.getTime()) {
-    return { valid: false, message: 'Reservation date and time cannot be in the past.' };
+    return { valid: false, isOutsideHours: false, message: 'Reservation date and time cannot be in the past.' };
   }
 
   // Fetch restaurant settings
@@ -56,7 +56,7 @@ export const validateReservationTimeAndCapacity = async (reservationDate: Date, 
   });
 
   if (!settings) {
-    return { valid: false, message: 'Restaurant settings are not configured.' };
+    return { valid: false, isOutsideHours: false, message: 'Restaurant settings are not configured.' };
   }
 
   const timeZone = settings.timezone || 'Asia/Karachi';
@@ -68,7 +68,7 @@ export const validateReservationTimeAndCapacity = async (reservationDate: Date, 
   const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
   if (!daySchedule || daySchedule.closed) {
-    return { valid: false, message: `The restaurant is closed on ${capitalizedDay}s.` };
+    return { valid: false, isOutsideHours: true, message: `The restaurant is closed on ${capitalizedDay}s.` };
   }
 
   // Parse open and close times (HH:MM format)
@@ -95,6 +95,7 @@ export const validateReservationTimeAndCapacity = async (reservationDate: Date, 
 
     return {
       valid: false,
+      isOutsideHours: true,
       message: `Reservations on ${capitalizedDay} are only accepted between ${daySchedule.open} and ${cutoffStr} (1 hour before closing).`,
     };
   }
@@ -120,6 +121,7 @@ export const validateReservationTimeAndCapacity = async (reservationDate: Date, 
   if (bookedCovers + partySize > maxCovers) {
     return {
       valid: false,
+      isOutsideHours: false,
       message: `We are fully booked for this time slot (requested ${partySize} guests, but only ${Math.max(0, maxCovers - bookedCovers)} seats available). Please choose another time.`,
     };
   }

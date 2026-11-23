@@ -99,7 +99,7 @@ export const HomePage: React.FC = () => {
   const availableTables = tableAvailability?.availableTables ?? totalTables;
 
   // Dynamic Opening Hours
-  const defaultHours = '9:00 AM – 12:00 PM';
+  const defaultHours = '9:00 AM – 12:00 AM';
   const openingHoursText = settings.openingHours?.monday
     ? `${settings.openingHours.monday.open} – ${settings.openingHours.monday.close}`
     : defaultHours;

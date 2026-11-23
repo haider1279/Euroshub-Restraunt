@@ -7,7 +7,7 @@ function getApiBase(): string {
   return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
 }
 
-const API_BASE = getApiBase();
+export const API_BASE = getApiBase();
 
 export class ApiError extends Error {
   code: string;
@@ -22,6 +22,15 @@ export class ApiError extends Error {
     this.details = details;
   }
 }
+
+// In-memory access token storage (never persisted to localStorage)
+let inMemoryAccessToken: string | null = null;
+
+export const getAccessToken = (): string | null => inMemoryAccessToken;
+
+export const setAccessToken = (token: string | null): void => {
+  inMemoryAccessToken = token;
+};
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -45,7 +54,7 @@ export async function apiRequest<T = any>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-  const token = localStorage.getItem('euroshub_access_token');
+  const token = getAccessToken();
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -80,20 +89,20 @@ export async function apiRequest<T = any>(
 
         if (refreshRes.ok) {
           const data = await refreshRes.json();
-          localStorage.setItem('euroshub_access_token', data.accessToken);
+          setAccessToken(data.accessToken);
           processQueue(null, data.accessToken);
 
           // Retry initial request with new token
           (headers as any)['Authorization'] = `Bearer ${data.accessToken}`;
           response = await fetch(url, { ...options, headers, credentials: 'include' });
         } else {
+          setAccessToken(null);
           processQueue(new Error('Session expired'), null);
-          localStorage.removeItem('euroshub_access_token');
           localStorage.removeItem('euroshub_user');
         }
       } catch (err) {
+        setAccessToken(null);
         processQueue(err, null);
-        localStorage.removeItem('euroshub_access_token');
         localStorage.removeItem('euroshub_user');
       } finally {
         isRefreshing = false;
@@ -102,11 +111,22 @@ export async function apiRequest<T = any>(
       // Wait for existing refresh to resolve
       return new Promise((resolve, reject) => {
         failedQueue.push({
-          resolve: () => {
-            const newToken = localStorage.getItem('euroshub_access_token');
-            if (newToken) (headers as any)['Authorization'] = `Bearer ${newToken}`;
+          resolve: (newToken) => {
+            const tokenToUse = typeof newToken === 'string' ? newToken : getAccessToken();
+            if (tokenToUse) (headers as any)['Authorization'] = `Bearer ${tokenToUse}`;
             fetch(url, { ...options, headers, credentials: 'include' })
-              .then((res) => res.json())
+              .then(async (res) => {
+                if (!res.ok) {
+                  const errorData = await res.json().catch(() => ({}));
+                  throw new ApiError(
+                    errorData?.error?.code || 'API_ERROR',
+                    errorData?.error?.message || `Request failed with status ${res.status}`,
+                    res.status,
+                    errorData?.error?.details
+                  );
+                }
+                return res.json();
+              })
               .then(resolve)
               .catch(reject);
           },

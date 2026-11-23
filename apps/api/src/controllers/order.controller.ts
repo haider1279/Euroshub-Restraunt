@@ -3,6 +3,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { prisma } from '../prisma';
 import { AuthRequest, OrderStatus } from '../types';
 import { generateOrderNumber, isValidStatusTransition, ALLOWED_STATUS_TRANSITIONS } from '../services/order.service';
+import { checkRestaurantStatus } from '../services/hours.service';
 
 export const createOrder = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -24,6 +25,23 @@ export const createOrder = async (req: AuthRequest, res: Response, next: NextFun
     const settings = await prisma.restaurantSettings.findUnique({
       where: { id: 'singleton' },
     });
+
+    // Enforce restaurant operating hours (Asia/Karachi)
+    if (settings && settings.openingHours) {
+      const status = checkRestaurantStatus(
+        new Date(),
+        settings.openingHours as any,
+        settings.timezone || 'Asia/Karachi'
+      );
+      if (!status.isOpen) {
+        return res.status(422).json({
+          error: {
+            code: 'RESTAURANT_CLOSED',
+            message: `${status.formattedMessage || 'Closed now'}. Orders cannot be accepted while the restaurant is closed.`,
+          },
+        });
+      }
+    }
 
     if (type === 'DELIVERY' && settings && !settings.deliveryEnabled) {
       return res.status(400).json({

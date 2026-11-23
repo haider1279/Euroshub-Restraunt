@@ -13,7 +13,7 @@ export const AboutPage: React.FC = () => {
   const totalTables = tableAvailability?.totalTables || settings.tableCount || 100;
   const openingHoursText = settings.openingHours?.monday
     ? `${settings.openingHours.monday.open} – ${settings.openingHours.monday.close}`
-    : '9:00 AM – 12:00 PM';
+    : '9:00 AM – 12:00 AM';
 
   return (
     <div className="space-y-16 sm:space-y-24 py-12 sm:py-20">

@@ -22,13 +22,13 @@ async function main() {
   // 1. Seed Restaurant Settings (Singleton)
   console.log('--> Seeding Restaurant Settings (Rawalpindi Identity)...');
   const standardHours = {
-    monday: { open: '09:00', close: '12:00', closed: false },
-    tuesday: { open: '09:00', close: '12:00', closed: false },
-    wednesday: { open: '09:00', close: '12:00', closed: false },
-    thursday: { open: '09:00', close: '12:00', closed: false },
-    friday: { open: '09:00', close: '12:00', closed: false },
-    saturday: { open: '09:00', close: '12:00', closed: false },
-    sunday: { open: '09:00', close: '12:00', closed: false },
+    monday: { open: '09:00', close: '00:00', closed: false },
+    tuesday: { open: '09:00', close: '00:00', closed: false },
+    wednesday: { open: '09:00', close: '00:00', closed: false },
+    thursday: { open: '09:00', close: '00:00', closed: false },
+    friday: { open: '09:00', close: '00:00', closed: false },
+    saturday: { open: '09:00', close: '00:00', closed: false },
+    sunday: { open: '09:00', close: '00:00', closed: false },
   };
 
   await prisma.restaurantSettings.upsert({
@@ -104,19 +104,36 @@ async function main() {
   }
 
   // 4. Seed Admin User
-  console.log('--> Seeding Bootstrap Admin User...');
-  const adminPasswordHash = await bcrypt.hash(process.env.ADMIN_SEED_PASSWORD || 'AdminPassword123!', 10);
-  await prisma.user.upsert({
+  const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD;
+  if (!adminSeedPassword || adminSeedPassword.trim() === '') {
+    throw new Error('ADMIN_SEED_PASSWORD environment variable is required for database seeding.');
+  }
+
+  const existingAdmin = await prisma.user.findUnique({
     where: { email: 'admin@euroshubkitchen.com' },
-    update: { passwordHash: adminPasswordHash, role: Role.ADMIN, name: 'Euroshub Admin' },
-    create: {
-      email: 'admin@euroshubkitchen.com',
-      passwordHash: adminPasswordHash,
-      name: 'Euroshub Admin',
-      phone: '+92 300 1234567',
-      role: Role.ADMIN,
-    },
   });
+
+  if (existingAdmin) {
+    console.log('--> Admin user already exists. Preserving existing passwordHash and role.');
+    await prisma.user.update({
+      where: { id: existingAdmin.id },
+      data: {
+        name: 'Euroshub Admin',
+      },
+    });
+  } else {
+    console.log('--> Seeding Bootstrap Admin User...');
+    const adminPasswordHash = await bcrypt.hash(adminSeedPassword, 10);
+    await prisma.user.create({
+      data: {
+        email: 'admin@euroshubkitchen.com',
+        passwordHash: adminPasswordHash,
+        name: 'Euroshub Admin',
+        phone: '+92 300 1234567',
+        role: Role.ADMIN,
+      },
+    });
+  }
 
   // 5. Seed Menu Categories
   console.log('--> Seeding Fast-Food Categories...');
@@ -391,7 +408,7 @@ async function main() {
   });
 
   console.log('==> Euroshub Kitchen Database Seeding Successfully Completed!');
-  console.log('    - Admin: admin@euroshubkitchen.com / AdminPassword123!');
+  console.log('    - Admin: admin@euroshubkitchen.com (password configured via ADMIN_SEED_PASSWORD)');
   console.log('    - Categories: 4 (Pizza, Burgers, Sandwiches, Sides & Extras)');
   console.log('    - Menu Items: 12 exact fast-food products with PKR variants');
   console.log('    - Tables: 100 active tables (01 to 100)');

@@ -4,6 +4,12 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../prisma';
 import { config } from '../config';
 import { AuthRequest, JwtPayload } from '../types';
+import {
+  hashToken,
+  createAndSaveRefreshToken,
+  setRefreshTokenCookie,
+  clearRefreshTokenCookie,
+} from '../services/token.service';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -51,16 +57,8 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       expiresIn: config.jwt.accessExpiresIn as any,
     });
 
-    const refreshToken = jwt.sign(payload, config.jwt.refreshSecret, {
-      expiresIn: config.jwt.refreshExpiresIn as any,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    const { token: refreshToken } = await createAndSaveRefreshToken(user.id, payload);
+    setRefreshTokenCookie(res, refreshToken);
 
     return res.status(201).json({
       user,
@@ -108,16 +106,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       expiresIn: config.jwt.accessExpiresIn as any,
     });
 
-    const refreshToken = jwt.sign(payload, config.jwt.refreshSecret, {
-      expiresIn: config.jwt.refreshExpiresIn as any,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: config.nodeEnv === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    const { token: refreshToken } = await createAndSaveRefreshToken(user.id, payload);
+    setRefreshTokenCookie(res, refreshToken);
 
     return res.json({
       user: {
@@ -151,6 +141,7 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
     try {
       payload = jwt.verify(token, config.jwt.refreshSecret) as JwtPayload;
     } catch {
+      clearRefreshTokenCookie(res);
       return res.status(401).json({
         error: {
           code: 'INVALID_REFRESH_TOKEN',
@@ -159,8 +150,52 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
       });
     }
 
+    // Look up token hash in RefreshToken table
+    const tokenHash = hashToken(token);
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { tokenHash },
+    });
+
+    if (!storedToken) {
+      clearRefreshTokenCookie(res);
+      return res.status(401).json({
+        error: {
+          code: 'INVALID_REFRESH_TOKEN',
+          message: 'Refresh token is unrecognized or untracked.',
+        },
+      });
+    }
+
+    // Check if token was revoked (Reuse Detection)
+    if (storedToken.revokedAt) {
+      // SECURITY: Token reuse detected! Revoke all active tokens for this user
+      await prisma.refreshToken.updateMany({
+        where: { userId: storedToken.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      clearRefreshTokenCookie(res);
+      return res.status(401).json({
+        error: {
+          code: 'TOKEN_REVOKED',
+          message: 'Refresh token has been revoked. All active sessions have been terminated for security.',
+        },
+      });
+    }
+
+    // Check expiration
+    if (storedToken.expiresAt < new Date()) {
+      clearRefreshTokenCookie(res);
+      return res.status(401).json({
+        error: {
+          code: 'TOKEN_EXPIRED',
+          message: 'Refresh token has expired. Please log in again.',
+        },
+      });
+    }
+
+    // Reload the user's role and data from the database
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: storedToken.userId },
       select: {
         id: true,
         email: true,
@@ -172,6 +207,7 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
     });
 
     if (!user) {
+      clearRefreshTokenCookie(res);
       return res.status(401).json({
         error: {
           code: 'USER_NOT_FOUND',
@@ -180,11 +216,33 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
       });
     }
 
-    const newAccessToken = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      config.jwt.accessSecret,
-      { expiresIn: config.jwt.accessExpiresIn as any }
+    // Rotate: Issue new refresh token
+    const newPayload: JwtPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role, // role reloaded fresh from DB
+    };
+
+    const { token: newRefreshToken, record: newRecord } = await createAndSaveRefreshToken(
+      user.id,
+      newPayload
     );
+
+    // Revoke old token and link to replacement
+    await prisma.refreshToken.update({
+      where: { id: storedToken.id },
+      data: {
+        revokedAt: new Date(),
+        replacedById: newRecord.id,
+      },
+    });
+
+    // Sign new access token using reloaded role
+    const newAccessToken = jwt.sign(newPayload, config.jwt.accessSecret, {
+      expiresIn: config.jwt.accessExpiresIn as any,
+    });
+
+    setRefreshTokenCookie(res, newRefreshToken);
 
     return res.json({
       accessToken: newAccessToken,
@@ -195,12 +253,21 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-export const logout = async (_req: Request, res: Response) => {
-  res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: config.nodeEnv === 'production',
-    sameSite: 'lax',
-  });
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies?.refreshToken;
+    if (token) {
+      const tokenHash = hashToken(token);
+      await prisma.refreshToken.updateMany({
+        where: { tokenHash, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    }
+  } catch (err) {
+    console.error('Error revoking token on logout:', err);
+  } finally {
+    clearRefreshTokenCookie(res);
+  }
   return res.json({ message: 'Logged out successfully.' });
 };
 
@@ -273,6 +340,13 @@ export const updateProfile = async (req: AuthRequest, res: Response, next: NextF
       }
 
       updateData.passwordHash = await bcrypt.hash(newPassword, 10);
+
+      // Changing password revokes all refresh tokens
+      await prisma.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      clearRefreshTokenCookie(res);
     }
 
     const updatedUser = await prisma.user.update({
@@ -290,6 +364,51 @@ export const updateProfile = async (req: AuthRequest, res: Response, next: NextF
     });
 
     return res.json({ user: updatedUser });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const changePassword = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_CURRENT_PASSWORD',
+          message: 'Current password is incorrect.',
+        },
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    });
+
+    // Revoke all refresh tokens for this user
+    await prisma.refreshToken.updateMany({
+      where: { userId: user.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
+    clearRefreshTokenCookie(res);
+
+    return res.json({ message: 'Password updated successfully. All other sessions have been signed out.' });
   } catch (err) {
     next(err);
   }

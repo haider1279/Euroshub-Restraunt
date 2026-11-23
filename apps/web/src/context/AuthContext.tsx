@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-import { apiRequest } from '../api/client';
+import { apiRequest, setAccessToken } from '../api/client';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -30,20 +30,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('euroshub_user', JSON.stringify(data.user));
     } catch {
       setUser(null);
+      setAccessToken(null);
       localStorage.removeItem('euroshub_user');
-      localStorage.removeItem('euroshub_access_token');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // On app load, call /api/auth/refresh to restore session using httpOnly cookie
   useEffect(() => {
-    const token = localStorage.getItem('euroshub_access_token');
-    if (token) {
-      refreshUser();
-    } else {
-      setIsLoading(false);
-    }
+    const restoreSession = async () => {
+      try {
+        const data = await apiRequest<{ user: User; accessToken: string }>('/auth/refresh', {
+          method: 'POST',
+        });
+        setAccessToken(data.accessToken);
+        setUser(data.user);
+        localStorage.setItem('euroshub_user', JSON.stringify(data.user));
+      } catch {
+        // No active session or refresh token expired
+        setAccessToken(null);
+        setUser(null);
+        localStorage.removeItem('euroshub_user');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    restoreSession();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -52,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       body: JSON.stringify({ email, password }),
     });
 
-    localStorage.setItem('euroshub_access_token', data.accessToken);
+    setAccessToken(data.accessToken);
     localStorage.setItem('euroshub_user', JSON.stringify(data.user));
     setUser(data.user);
     toast.success(`Welcome back, ${data.user.name}!`);
@@ -64,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       body: JSON.stringify(formData),
     });
 
-    localStorage.setItem('euroshub_access_token', data.accessToken);
+    setAccessToken(data.accessToken);
     localStorage.setItem('euroshub_user', JSON.stringify(data.user));
     setUser(data.user);
     toast.success('Registration successful! Welcome to Euroshub Kitchen.');
@@ -76,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // ignore
     } finally {
-      localStorage.removeItem('euroshub_access_token');
+      setAccessToken(null);
       localStorage.removeItem('euroshub_user');
       setUser(null);
       toast.info('You have been signed out.');

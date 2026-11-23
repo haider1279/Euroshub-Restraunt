@@ -15,9 +15,11 @@ export const createReservation = async (req: AuthRequest, res: Response, next: N
     // Validate opening hours and capacity
     const validation = await validateReservationTimeAndCapacity(reservationDate, partySize);
     if (!validation.valid) {
-      return res.status(400).json({
+      const statusCode = (validation as any).isOutsideHours ? 422 : 400;
+      const code = (validation as any).isOutsideHours ? 'OUTSIDE_OPENING_HOURS' : 'INVALID_RESERVATION';
+      return res.status(statusCode).json({
         error: {
-          code: 'INVALID_RESERVATION',
+          code,
           message: validation.message,
         },
       });

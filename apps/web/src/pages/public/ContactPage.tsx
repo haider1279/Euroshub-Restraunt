@@ -28,7 +28,7 @@ export const ContactPage: React.FC = () => {
   const totalTables = tableAvailability?.totalTables || settings.tableCount || 100;
   const openingHoursText = settings.openingHours?.monday
     ? `${settings.openingHours.monday.open} – ${settings.openingHours.monday.close}`
-    : '9:00 AM – 12:00 PM';
+    : '9:00 AM – 12:00 AM';
 
   const {
     register,

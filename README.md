@@ -9,7 +9,7 @@ The platform features a modern, responsive web application for dine-in and takea
 ## 1. Restaurant Identity & Core Business Principles
 
 - **Location:** Kohistan Tower, Saddar, Rawalpindi, Office 609, Pakistan
-- **Operating Hours:** Daily 9:00 AM – 12:00 PM
+- **Operating Hours:** Daily 9:00 AM – 12:00 AM (Midnight)
 - **Contact:** `haider1.euroshub@gmail.com`
 - **Official Currency:** Pakistani Rupee (`PKR`), formatted consistently across all customer and administrative touchpoints as `Rs. 700` via centralized currency utilities.
 - **Ordering Channels:**
@@ -95,7 +95,7 @@ The database is seeded with 12 fast-food products across 4 categories with varia
 
 | Role | Email | Password | Access / Capabilities |
 |------|-------|----------|-----------------------|
-| **Administrator** | `admin@euroshubkitchen.com` | `AdminPassword123!` | Full access to POS, dispatch, settings, menu catalog, tables, review moderation |
+| **Administrator** | `admin@euroshubkitchen.com` | Set via `ADMIN_SEED_PASSWORD` in `.env` | Full access to POS, dispatch, settings, menu catalog, tables, review moderation |
 
 > *Note: In accordance with our anti-fabrication policy, no fake customer accounts, fake orders, or fake reviews are seeded. Customer accounts are created during registration or automated testing.*
 
@@ -119,8 +119,11 @@ npm run db:setup:windows
 # Or use Docker if installed:
 docker compose up -d
 
-# 3. Synchronize schema & seed production data
-npm run db:push
+# 3. Apply migrations & seed initial restaurant data
+# For development migrations:
+npm run db:migrate
+# For deployment / production schema sync:
+npm run db:deploy
 npm run db:seed
 
 # 4. Start Development Servers
@@ -158,7 +161,7 @@ npm run build
 
 The platform is designed to connect to **Supabase** in production:
 
-### 1. Database Connection
+### 1. Database Connection & Production Migrations
 In your production `.env`, configure the Supabase PostgreSQL connection strings:
 ```ini
 # Supabase Transaction / Session Pooler (port 6543)
@@ -167,6 +170,21 @@ DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supab
 # Direct connection for migrations (port 5432)
 DIRECT_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres"
 ```
+
+#### Production Migration Strategy (Never use `db push` in Production)
+Do **not** use `prisma db push` in production. `db push` does not record migration history in `_prisma_migrations` and risks schema drift or accidental data loss. Always use Prisma Migrate:
+
+1. **Deploy Migrations**:
+   ```bash
+   npm run db:deploy
+   ```
+
+2. **Existing Supabase Database (Baseline Resolution)**:
+   If connecting to an existing Supabase database that already has tables, resolve the baseline migration as already applied before running subsequent migrations:
+   ```bash
+   npx prisma migrate resolve --applied 0_init
+   npm run db:deploy
+   ```
 
 ### 2. Supabase Storage Buckets
 Create two public buckets in the Supabase Storage console:
@@ -192,7 +210,7 @@ SUPABASE_STORAGE_BUCKET_LOGO="logo"
 - `/cart` — Cart review with variant and add-on breakdown.
 - `/checkout` — Checkout supporting Dine-In (with table selector `01`–`100`) and Takeaway, fixed to "Pay at Restaurant".
 - `/order-confirmation/:id` — Instant order confirmation screen with order number and status.
-- `/reservation` — Table booking for dining room slots between 9:00 AM and 12:00 PM.
+- `/reservation` — Table booking for dining room slots between 9:00 AM and 11:00 PM (closing at midnight).
 - `/about` & `/contact` — Authentic Kohistan Tower, Saddar, Rawalpindi details.
 
 ### Customer Account

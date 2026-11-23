@@ -9,6 +9,7 @@ import { useRestaurant } from '../../context/RestaurantContext';
 import { apiRequest, api } from '../../api/client';
 import { Order, OrderType, RestaurantTable } from '../../types';
 import { formatCurrency } from '../../utils/currency';
+import { checkRestaurantStatus } from '../../utils/hours';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
@@ -35,6 +36,12 @@ export const CheckoutPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { items, subtotal, clearCart } = useCart();
   const { settings } = useRestaurant();
+
+  const restaurantStatus = checkRestaurantStatus(
+    new Date(),
+    settings.openingHours as any,
+    settings.timezone || 'Asia/Karachi'
+  );
 
   // Order type limited to Dine-In and Takeaway ONLY (Delivery gated off)
   const [orderType, setOrderType] = useState<OrderType>('DINE_IN');
@@ -154,6 +161,18 @@ export const CheckoutPage: React.FC = () => {
           Complete your order details. Dine-in and Takeaway available daily at Kohistan Tower, Saddar.
         </p>
       </div>
+
+      {!restaurantStatus.isOpen && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3 text-amber-900 dark:text-amber-200 text-xs">
+          <Clock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+          <div>
+            <p className="font-bold">{restaurantStatus.formattedMessage}</p>
+            <p className="mt-0.5 text-charcoal-600 dark:text-charcoal-400">
+              Orders cannot be placed while the restaurant is closed. Please check back during opening hours.
+            </p>
+          </div>
+        </div>
+      )}
 
       {apiError && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-800 text-xs">
@@ -349,9 +368,10 @@ export const CheckoutPage: React.FC = () => {
                 size="lg"
                 className="w-full"
                 isLoading={isSubmitting}
+                disabled={!restaurantStatus.isOpen || isSubmitting}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
-                Place Order ({formatCurrency(subtotal)})
+                {!restaurantStatus.isOpen ? restaurantStatus.formattedMessage : `Place Order (${formatCurrency(subtotal)})`}
               </Button>
 
               <div className="bg-bistro-bg p-3 rounded-lg border border-bistro-border text-[11px] text-charcoal-600 space-y-1">
@@ -359,7 +379,7 @@ export const CheckoutPage: React.FC = () => {
                   <ShieldCheck className="w-4 h-4 text-emerald-600" /> Authorized Fast-Food Kitchen
                 </p>
                 <p>
-                  Euroshub Kitchen — Kohistan Tower, Saddar, Rawalpindi. Daily 9:00 AM – 12:00 PM.
+                  Euroshub Kitchen — Kohistan Tower, Saddar, Rawalpindi. Daily 9:00 AM – 12:00 AM (Midnight).
                 </p>
               </div>
             </Card>

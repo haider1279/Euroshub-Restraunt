@@ -6,6 +6,7 @@ import { useRestaurant } from '../context/RestaurantContext';
 import { useTheme } from '../context/ThemeContext';
 import { HorseLogo } from '../components/ui/HorseLogo';
 import { resolveImageUrl } from '../components/ui/FoodImage';
+import { checkRestaurantStatus } from '../utils/hours';
 import {
   ShoppingBag,
   User,
@@ -47,6 +48,12 @@ export const PublicLayout: React.FC = () => {
   // Find active social links with non-empty URL
   const activeSocials = socialLinks.filter((s) => s.isActive && s.url && s.url.trim().length > 0);
 
+  const restaurantStatus = checkRestaurantStatus(
+    new Date(),
+    settings.openingHours as any,
+    settings.timezone || 'Asia/Karachi'
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-bistro-bg text-charcoal dark:bg-charcoal-900 dark:text-charcoal-100">
       {/* Top Banner / Announcement Bar */}
@@ -57,9 +64,19 @@ export const PublicLayout: React.FC = () => {
               <MapPin className="w-3.5 h-3.5 text-terracotta flex-shrink-0" />
               <span>{settings.address || 'Kohistan Tower, Saddar, Rawalpindi, Office 609'}</span>
             </span>
-            <span className="hidden md:flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-terracotta flex-shrink-0" />
-              <span>Daily: 9:00 AM – 12:00 PM</span>
+              {restaurantStatus.isOpen ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Daily: 9:00 AM – 12:00 AM</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-amber-300 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span>{restaurantStatus.formattedMessage}</span>
+                </span>
+              )}
             </span>
           </div>
           <div className="flex items-center space-x-3 text-[11px] sm:text-xs">
@@ -311,7 +328,7 @@ export const PublicLayout: React.FC = () => {
                 <span className="text-white font-medium">
                   {settings.openingHours?.monday
                     ? `${settings.openingHours.monday.open} – ${settings.openingHours.monday.close}`
-                    : '9:00 AM – 12:00 PM'}
+                    : '9:00 AM – 12:00 AM'}
                 </span>
               </li>
               <li className="text-[11px] text-charcoal-400 pt-1">Dine-in & Takeaway orders available daily.</li>

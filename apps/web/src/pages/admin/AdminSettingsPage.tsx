@@ -12,6 +12,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Save, Clock, UtensilsCrossed, Share2, Sparkles, Armchair } from 'lucide-react';
+import { ChangePasswordCard } from '../../components/auth/ChangePasswordCard';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -430,6 +431,9 @@ export default function AdminSettingsPage() {
           ))}
         </div>
       </div>
+
+      {/* Admin Security Settings */}
+      <ChangePasswordCard />
     </div>
   );
 }

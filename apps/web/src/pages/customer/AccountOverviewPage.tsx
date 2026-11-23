@@ -11,6 +11,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { ChangePasswordCard } from '../../components/auth/ChangePasswordCard';
 import {
   ShoppingBag,
   Calendar,
@@ -203,6 +204,9 @@ export const AccountOverviewPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Account Security & Password */}
+      <ChangePasswordCard />
     </div>
   );
 };

@@ -347,8 +347,8 @@ describe('Euroshub Kitchen API Comprehensive Test Suite', () => {
           partySize: 2,
         });
 
-      expect(res.status).toBe(400);
-      expect(res.body.error.code).toBe('INVALID_RESERVATION');
+      expect(res.status).toBe(422);
+      expect(res.body.error.code).toBe('OUTSIDE_OPENING_HOURS');
       expect(res.body.error.message).toContain('accepted between');
     });
 

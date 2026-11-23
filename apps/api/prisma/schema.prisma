@@ -46,6 +46,23 @@ model User {
   orders       Order[]
   reservations Reservation[]
   reviews      Review[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String        @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  replacedBy   RefreshToken? @relation("TokenRotation", fields: [replacedById], references: [id], onDelete: SetNull)
+  replacedTokens RefreshToken[] @relation("TokenRotation")
+  createdAt    DateTime      @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
 }
 
 model MenuCategory {

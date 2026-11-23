@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import { config } from './config';
@@ -21,24 +22,25 @@ export const app = express();
 
 app.set('trust proxy', 1);
 
-const allowedOrigins = [
-  config.frontendUrl,
-  'https://euroshub-restraunt-web.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-];
+// Allowed origins from CORS_ORIGINS or default in development
+const corsOriginsEnv = process.env.CORS_ORIGINS;
+export const allowedOrigins: string[] = corsOriginsEnv
+  ? corsOriginsEnv.split(',').map((s) => s.trim()).filter(Boolean)
+  : process.env.NODE_ENV === 'production'
+  ? []
+  : ['http://localhost:5173'];
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const isAllowed =
-        allowedOrigins.indexOf(origin) !== -1 ||
-        origin === 'https://euroshub-restraunt-web.vercel.app' ||
-        origin.endsWith('.vercel.app') ||
-        process.env.NODE_ENV !== 'production';
-      if (isAllowed) {
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy'));
@@ -49,7 +51,7 @@ app.use(
 );
 
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // Serve uploaded menu images statically
 app.use('/uploads', express.static(uploadDir));
