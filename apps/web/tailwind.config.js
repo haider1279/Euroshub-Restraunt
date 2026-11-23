@@ -1,94 +1,91 @@
 /** @type {import('tailwindcss').Config} */
+
+// Colors resolve to the CSS variables in src/styles/tokens.css. Channels are
+// stored as "R G B" so Tailwind opacity modifiers (bg-accent/10) keep working.
+const channel = (name) => `rgb(var(${name}) / <alpha-value>)`;
+
 export default {
-  darkMode: 'class',
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
+    // Replaced, not extended: only the design tokens below exist, so ad-hoc
+    // palette classes (stone-500, amber-50, ...) no longer generate styles.
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+      inherit: 'inherit',
+      black: '#000000',
+
+      night: channel('--c-night'), // hero sky, deepest
+      canvas: channel('--c-canvas'), // page background
+      deep: channel('--c-deep'), // sunken bands, table headers
+      surface: channel('--c-surface'), // cards, inputs
+      raised: channel('--c-raised'), // hover / selected surface
+
+      ink: channel('--c-ink'),
+      muted: 'rgb(var(--c-ink) / 0.66)',
+      subtle: 'rgb(var(--c-ink) / 0.45)',
+      line: 'rgb(var(--c-ink) / 0.08)',
+      'line-strong': 'rgb(var(--c-ink) / 0.16)',
+
+      accent: channel('--c-accent'),
+      cyan: channel('--c-cyan'),
+      rose: channel('--c-rose'),
+      danger: channel('--c-danger'),
+      warning: channel('--c-warning'),
+    },
+    fontFamily: {
+      serif: ['"Iowan Old Style"', '"Palatino Linotype"', 'Palatino', '"Book Antiqua"', 'Georgia', 'serif'],
+      sans: ['system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+      mono: ['ui-monospace', '"SFMono-Regular"', 'Menlo', 'Consolas', 'monospace'],
+    },
+    // Type scale: 12/14/16/18/22/28/40/56/84. Display sizes are fluid.
+    fontSize: {
+      xs: ['0.75rem', { lineHeight: '1rem' }],
+      sm: ['0.875rem', { lineHeight: '1.25rem' }],
+      base: ['1rem', { lineHeight: '1.5rem' }],
+      lg: ['1.125rem', { lineHeight: '1.75rem' }],
+      xl: ['1.375rem', { lineHeight: '1.875rem' }],
+      '2xl': ['1.75rem', { lineHeight: '2.125rem' }],
+      '3xl': ['clamp(2rem, 1.5rem + 2vw, 2.5rem)', { lineHeight: '1.1' }],
+      '4xl': ['clamp(2.5rem, 1.75rem + 3vw, 3.5rem)', { lineHeight: '1.05' }],
+      '5xl': ['clamp(3rem, 1.5rem + 6vw, 5.25rem)', { lineHeight: '1' }],
+    },
+    borderRadius: {
+      none: '0',
+      sm: '8px',
+      DEFAULT: '8px', // inputs
+      md: '8px',
+      lg: '14px', // cards
+      xl: '14px',
+      '2xl': '14px',
+      '3xl': '14px',
+      full: '9999px', // pills
+    },
+    // Depth comes from borders and surface steps, not shadows.
+    boxShadow: {
+      none: 'none',
+      sm: 'none',
+      DEFAULT: 'none',
+      md: 'none',
+      lg: 'none',
+      xl: 'none',
+      '2xl': 'none',
+      overlay: '0 24px 64px -16px rgb(0 0 0 / 0.6)',
+    },
     extend: {
-      colors: {
-        // Refined European Bistro & Pakistani Kitchen Palette
-        charcoal: {
-          DEFAULT: '#1A1815',
-          50: '#F8F6F2',
-          100: '#EFECE6',
-          200: '#DDD7CE',
-          300: '#C2BBB0',
-          400: '#A19A8E',
-          500: '#787166',
-          600: '#4D473F',
-          700: '#2E2A25',
-          800: '#1F1C18',
-          850: '#171512',
-          900: '#12100E',
-          950: '#0A0908',
-        },
-        terracotta: {
-          DEFAULT: '#C8763A',
-          50: '#FDF7F3',
-          100: '#FAE8DC',
-          200: '#F4CFB9',
-          300: '#EAB08E',
-          400: '#DE8E5E',
-          500: '#C8763A',
-          600: '#B05E26',
-          700: '#8C481C',
-          800: '#6C3616',
-          900: '#542B13',
-        },
-        olive: {
-          DEFAULT: '#4A5D3A',
-          50: '#F5F8F3',
-          100: '#E6EFE1',
-          200: '#CDDFC3',
-          300: '#A8C59A',
-          400: '#7FA46E',
-          500: '#4A5D3A',
-          600: '#3D4D30',
-          700: '#313E27',
-          800: '#26301F',
-          900: '#1D2518',
-        },
-        bistro: {
-          bg: '#FAF6F1',
-          surface: '#FFFFFF',
-          card: '#FDFBF8',
-          border: '#EBE4DA',
-          muted: '#857D74',
-          'dark-bg': '#0E0C0A',
-          'dark-surface': '#161411',
-          'dark-card': '#1E1B17',
-          'dark-border': '#302B24',
-        },
-        // Status colors
-        status: {
-          pending: '#D97706',    // Amber
-          confirmed: '#475569',  // Blue-slate
-          preparing: '#C8763A',  // Terracotta
-          ready: '#4A5D3A',      // Olive
-          completed: '#15803D',  // Neutral/Forest Green
-          cancelled: '#DC2626',  // Muted red
-        },
+      maxWidth: {
+        content: '1120px',
+        admin: '1280px',
       },
-      fontFamily: {
-        serif: ['"Playfair Display"', 'Georgia', 'serif'],
-        sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+      letterSpacing: {
+        display: '-0.02em',
       },
-      borderRadius: {
-        DEFAULT: '8px',
-        sm: '6px',
-        md: '8px',
-        lg: '10px',
-        xl: '12px',
-        '2xl': '16px',
+      transitionTimingFunction: {
+        DEFAULT: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
+        out: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
       },
-      boxShadow: {
-        soft: '0 2px 10px rgba(26, 24, 21, 0.05)',
-        card: '0 4px 20px rgba(26, 24, 21, 0.06)',
-        modal: '0 20px 40px rgba(26, 24, 21, 0.15)',
-        'dark-soft': '0 2px 10px rgba(0, 0, 0, 0.3)',
-        'dark-card': '0 4px 20px rgba(0, 0, 0, 0.4)',
+      transitionDuration: {
+        DEFAULT: '200ms',
       },
     },
   },

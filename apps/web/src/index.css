@@ -1,57 +1,269 @@
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--nav-h) + 16px);
+  }
+
   body {
-    background-color: #FAF6F1;
-    color: #1A1815;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-canvas font-sans text-base text-ink antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 
-  .dark body {
-    background-color: #0E0C0A;
-    color: #F8F6F2;
+  /* Serif headings: regular weight, tight tracking */
+  h1,
+  h2,
+  h3 {
+    font-family: theme('fontFamily.serif');
+    font-weight: 400;
+    letter-spacing: -0.02em;
   }
 
-  h1, h2, h3, h4, .font-serif {
-    font-family: 'Playfair Display', Georgia, serif;
+  /* One focus treatment everywhere: 2px green, offset from the element. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 3px;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgb(var(--c-accent) / 0.25);
+    color: rgb(var(--c-ink));
+  }
+
+  /* Native date/time pickers on a dark surface */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(0.85);
+    cursor: pointer;
+  }
+
+  select option {
+    background: rgb(var(--c-surface));
+    color: rgb(var(--c-ink));
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--c-canvas));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--c-ink) / 0.12);
+    border-radius: 999px;
+    border: 2px solid rgb(var(--c-canvas));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--c-ink) / 0.2);
   }
 }
 
-/* Custom subtle scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+@layer components {
+  /* Page container widths */
+  .container-content {
+    @apply mx-auto w-full max-w-content px-4 sm:px-6;
+  }
+  .container-admin {
+    @apply mx-auto w-full max-w-admin px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Small uppercase label above headings */
+  .eyebrow {
+    @apply font-sans text-xs font-medium uppercase tracking-[0.14em] text-muted;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Hero height: full viewport, clamped. svh avoids mobile toolbar jumps. */
+  .hero-h {
+    height: clamp(560px, 100vh, 880px);
+    height: clamp(560px, 100svh, 880px);
+  }
+
+  /* Interactive card: lifts 2px and the border brightens */
+  .card-interactive {
+    transition:
+      transform var(--dur-ui) var(--ease-out),
+      border-color var(--dur-ui) var(--ease-out),
+      background-color var(--dur-ui) var(--ease-out);
+  }
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--c-ink) / 0.18);
+  }
+
+  /* Pressable: subtle scale on press */
+  .pressable {
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      background-color var(--dur-ui) var(--ease-out),
+      border-color var(--dur-ui) var(--ease-out),
+      color var(--dur-ui) var(--ease-out),
+      opacity var(--dur-ui) var(--ease-out);
+  }
+  .pressable:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  /* Horizontal scroll rows (category pills) */
+  .scroll-row {
+    @apply flex gap-2 overflow-x-auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroll-row::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: #FAF6F1;
+/* ── Motion ─────────────────────────────────────────────────────────── */
+
+/* Section reveal: fade + 12px rise, run once (see hooks/useReveal.ts) */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity var(--dur-reveal) var(--ease-out),
+    transform var(--dur-reveal) var(--ease-out);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #C8C4BE;
-  border-radius: 4px;
+/* Page transition: quick fade on route change */
+.page-enter {
+  animation: page-fade var(--dur-fast) var(--ease-out);
+}
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #A49E96;
+/* Cart badge bump when the count changes */
+.badge-bump {
+  animation: badge-bump 320ms var(--ease-out);
+}
+@keyframes badge-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: #0E0C0A;
+/* Dialog / sheet entrance */
+.overlay-enter {
+  animation: page-fade var(--dur-ui) var(--ease-out);
+}
+.dialog-enter {
+  animation: dialog-in var(--dur-ui) var(--ease-out);
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sheet-enter-right {
+  animation: sheet-right 260ms var(--ease-out);
+}
+@keyframes sheet-right {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.sheet-enter-left {
+  animation: sheet-left 260ms var(--ease-out);
+}
+@keyframes sheet-left {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #2E2A25;
-  border-radius: 4px;
+/* Hero entrance: staggered fade + rise. Delay is set inline per element. */
+.hero-in {
+  opacity: 0;
+  animation: hero-in 760ms var(--ease-out) forwards;
+}
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #4D473F;
+/* Loading spinner (functional, only shown while work is in flight) */
+.spin {
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* Micro-animations */
-.transition-bistro {
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+/* Reduced motion: no movement anywhere. Fades become instant except reveals,
+   which keep a short opacity-only change. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    transform: none;
+    transition: opacity 200ms linear !important;
+  }
+  .card-interactive:hover,
+  .pressable:active:not(:disabled) {
+    transform: none;
+  }
+  .spin {
+    animation: spin 1.2s linear infinite !important;
+  }
 }

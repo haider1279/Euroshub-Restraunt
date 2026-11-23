@@ -1,18 +1,19 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Check } from 'lucide-react';
 import { apiRequest } from '../../api/client';
 import { Order } from '../../types';
 import { formatCurrency } from '../../utils/currency';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { Skeleton } from '../../components/ui/Skeleton';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { formatDateTime } from '../../utils/date';
+import { ButtonLink } from '../../components/ui/Button';
+import { Skeleton, LoadingStatus } from '../../components/ui/Skeleton';
+import { Notice } from '../../components/ui/EmptyState';
 
 export const OrderConfirmationPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['orderConfirmation', orderId],
     queryFn: () => apiRequest<{ order: Order }>(`/orders/${orderId}`),
     enabled: !!orderId,
@@ -22,105 +23,69 @@ export const OrderConfirmationPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 space-y-4">
-        <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+      <div className="container-content max-w-2xl py-16">
+        <LoadingStatus label="Loading your order" />
+        <Skeleton className="h-10 w-2/3" />
+        <Skeleton className="mt-8 h-64 w-full rounded-lg" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-20 space-y-8">
-      {/* Success Celebration Banner */}
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-sm animate-bounce-short">
-          <CheckCircle2 className="w-10 h-10" />
-        </div>
-        <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider block">
-          Order Placed Successfully
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-serif font-bold text-charcoal">
-          Thank You For Your Order!
-        </h1>
-        <p className="text-xs sm:text-sm text-charcoal-500 max-w-md mx-auto leading-relaxed">
-          Your order has been received by Euroshub Kitchen and is being prepared according to our standard state flow.
-        </p>
-      </div>
+    <div className="container-content max-w-2xl pb-24 pt-12 sm:pt-16">
+      <span className="flex h-11 w-11 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-accent" aria-hidden="true">
+        <Check className="h-5 w-5" />
+      </span>
+      <p className="eyebrow mt-6">Order placed</p>
+      <h1 className="mt-3 font-serif text-4xl text-ink">Thanks. The kitchen has your order.</h1>
+      <p className="mt-4 text-base text-muted">You’ll pay at the restaurant. You can follow its status from your account.</p>
 
-      {/* Order Reference Box */}
-      {order && (
-        <Card className="p-6 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-bistro-border gap-2">
+      {isError || !order ? (
+        <Notice tone="neutral" className="mt-10">
+          We couldn’t load the order details right now. You can find this order in your account.
+        </Notice>
+      ) : (
+        <section aria-labelledby="order-summary" className="mt-10 rounded-lg border border-line bg-surface p-6">
+          <div className="flex flex-wrap justify-between gap-4 border-b border-line pb-5">
             <div>
-              <span className="text-[11px] text-charcoal-400 uppercase tracking-wider block">
-                Order Reference Number
-              </span>
-              <span className="font-mono font-bold text-lg text-terracotta">
+              <p className="text-sm text-muted">Order number</p>
+              <h2 id="order-summary" className="tabular mt-1 font-mono text-lg text-ink">
                 {order.orderNumber}
-              </span>
+              </h2>
             </div>
             <div className="sm:text-right">
-              <span className="text-[11px] text-charcoal-400 uppercase tracking-wider block">
-                Order Type
-              </span>
-              <span className="text-xs font-bold text-charcoal-800 uppercase bg-bistro-bg px-2.5 py-1 rounded border border-bistro-border">
-                {order.type === 'DINE_IN'
-                  ? `Dine-In (Table ${order.tableNumber || 'Assigned'})`
-                  : 'Takeaway'}
-              </span>
+              <p className="text-sm text-muted">{formatDateTime(order.createdAt)}</p>
+              <p className="mt-1 text-sm text-ink">
+                {order.type === 'DINE_IN' ? `Dine-in · Table ${order.tableNumber || 'to be assigned'}` : 'Takeaway'}
+              </p>
             </div>
           </div>
 
-          {/* Itemized list */}
-          <div className="space-y-2.5 text-xs">
-            <h4 className="font-serif font-bold text-charcoal text-sm">Items Ordered</h4>
-            <div className="divide-y divide-bistro-border">
-              {order.items.map((it) => (
-                <div key={it.id} className="py-2 flex justify-between items-center">
-                  <div>
-                    <span className="font-semibold text-charcoal">{it.quantity}×</span>{' '}
-                    <span>{it.nameAtPurchase}</span>
-                    {it.variantNameAtPurchase && (
-                      <span className="text-terracotta font-medium text-[11px] ml-1.5">
-                        ({it.variantNameAtPurchase})
-                      </span>
-                    )}
-                  </div>
-                  <span className="font-medium text-charcoal-700">
-                    {formatCurrency(Number(it.priceAtPurchase) * it.quantity)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ul className="divide-y divide-line">
+            {order.items.map((it) => (
+              <li key={it.id} className="flex justify-between gap-4 py-3 text-sm">
+                <span className="text-ink">
+                  <span className="tabular text-muted">{it.quantity}×</span> {it.nameAtPurchase}
+                  {it.variantNameAtPurchase && <span className="text-muted"> · {it.variantNameAtPurchase}</span>}
+                </span>
+                <span className="tabular shrink-0 text-ink">{formatCurrency(Number(it.priceAtPurchase) * it.quantity)}</span>
+              </li>
+            ))}
+          </ul>
 
-          <div className="pt-3 border-t border-bistro-border flex justify-between items-baseline text-sm">
-            <span className="font-bold text-charcoal">Total (Pay at Restaurant)</span>
-            <span className="text-xl font-serif font-bold text-terracotta">
-              {formatCurrency(order.total)}
-            </span>
+          <div className="flex items-baseline justify-between border-t border-line pt-4">
+            <span className="text-base text-ink">Total · pay at the restaurant</span>
+            <span className="tabular font-serif text-2xl text-ink">{formatCurrency(order.total)}</span>
           </div>
-
-          {/* Track Order CTA */}
-          <div className="pt-2 flex flex-col sm:flex-row gap-3">
-            <Link to={`/account/orders/${order.id}`} className="flex-1">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Track Order Live Timeline
-              </Button>
-            </Link>
-            <Link to="/menu" className="flex-1">
-              <Button variant="outline" size="lg" className="w-full">
-                Back to Menu
-              </Button>
-            </Link>
-          </div>
-        </Card>
+        </section>
       )}
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        {order && <ButtonLink to={`/account/orders/${order.id}`}>Track this order</ButtonLink>}
+        <ButtonLink to="/menu" variant="secondary">
+          Back to the menu
+        </ButtonLink>
+      </div>
     </div>
   );
 };

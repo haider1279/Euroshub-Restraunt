@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Button } from '../ui/Button';
 
 interface Props {
   children: React.ReactNode;
@@ -34,30 +34,17 @@ export class ErrorBoundary extends React.Component<Props, State> {
       if (this.props.fallback) return <>{this.props.fallback}</>;
 
       return (
-        <div className="min-h-[40vh] flex flex-col items-center justify-center p-8 text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-7 h-7 text-red-500" />
-          </div>
-          <div>
-            <h2 className="text-lg font-serif font-bold text-charcoal">Something went wrong</h2>
-            <p className="text-xs text-charcoal-500 mt-1 max-w-xs mx-auto">
-              {this.state.error?.message || 'An unexpected error occurred.'}
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={this.handleReset}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-charcoal text-white rounded-lg hover:bg-charcoal-800 transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Try Again
-            </button>
-            <button
-              onClick={() => window.location.replace('/')}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold border border-bistro-border text-charcoal-600 rounded-lg hover:bg-charcoal-50 transition-colors"
-            >
-              Go Home
-            </button>
+        <div role="alert" className="container-content flex min-h-[60vh] flex-col justify-center py-16">
+          <p className="eyebrow">Error</p>
+          <h1 className="mt-3 font-serif text-3xl text-ink">This page didn’t load.</h1>
+          <p className="mt-3 max-w-prose text-sm text-muted">
+            {this.state.error?.message || 'An unexpected error occurred.'}
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button onClick={this.handleReset}>Try again</Button>
+            <Button variant="secondary" onClick={() => window.location.replace('/')}>
+              Go to home
+            </Button>
           </div>
         </div>
       );

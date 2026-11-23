@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Star, Eye, EyeOff, RefreshCcw } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiRequest } from '../../api/client';
 import { Review } from '../../types';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { Star, Eye, EyeOff, RefreshCcw } from 'lucide-react';
-import { toast } from 'sonner';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { RowAction, Pager } from '../../components/ui/DataTable';
 import { formatDate } from '../../utils/date';
+import { cn } from '../../utils/cn';
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex gap-0.5">
+    <span className="inline-flex gap-0.5 text-warning" aria-label={`${rating} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((s) => (
-        <Star
-          key={s}
-          className={`w-3.5 h-3.5 ${s <= rating ? 'fill-amber-400 text-amber-400' : 'text-stone-300'}`}
-        />
+        <Star key={s} className={s <= rating ? 'h-3.5 w-3.5 fill-current' : 'h-3.5 w-3.5 text-ink/15'} aria-hidden="true" />
       ))}
-    </div>
+    </span>
   );
 }
 
@@ -50,93 +50,72 @@ export default function AdminReviewsPage() {
     onError: () => toast.error('Failed to update visibility'),
   });
 
+  const reviews = data?.reviews || [];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-charcoal">Reviews</h1>
-          <p className="text-stone-500 mt-1">{data?.total ?? 0} reviews total</p>
+          <h1 className="font-serif text-2xl text-ink">Reviews</h1>
+          <p className="tabular mt-1 text-sm text-muted">{data?.total ?? 0} total</p>
         </div>
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setShowHidden(!showHidden)}
-            className={`text-sm px-4 py-2 rounded-xl border font-medium transition-colors ${
-              showHidden
-                ? 'bg-stone-700 text-white border-stone-700'
-                : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-            }`}
+            aria-pressed={showHidden}
             id="toggle-hidden-reviews-btn"
+            leftIcon={showHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
           >
-            {showHidden ? <Eye className="w-4 h-4 inline mr-1" /> : <EyeOff className="w-4 h-4 inline mr-1" />}
-            {showHidden ? 'Showing All' : 'Show Hidden'}
-          </button>
-          <Button variant="secondary" size="sm" onClick={() => refetch()} id="refresh-reviews-btn">
-            <RefreshCcw className="w-4 h-4" />
+            {showHidden ? 'Including hidden' : 'Show hidden'}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => refetch()} id="refresh-reviews-btn" aria-label="Refresh reviews">
+            <RefreshCcw className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>
 
-      <div className="space-y-3">
-        {isLoading
-          ? [...Array(5)].map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)
-          : (data?.reviews || []).map((review) => (
-              <div
-                key={review.id}
-                className={`bg-white rounded-2xl border shadow-sm p-5 transition-all ${
-                  review.isHidden ? 'border-stone-200 opacity-60' : 'border-stone-200'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <p className="font-semibold text-charcoal">{review.customer?.name}</p>
-                      <StarRating rating={review.rating} />
-                      {review.isHidden && <Badge variant="secondary" size="sm">Hidden</Badge>}
-                    </div>
-                    <p className="text-sm text-stone-600 mb-2 leading-relaxed">"{review.comment}"</p>
-                    <div className="flex gap-3 text-xs text-stone-400">
-                      <span>{formatDate(review.createdAt)}</span>
-                      {review.order && (
-                        <span>· Order #{review.order.orderNumber}</span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => toggleHide.mutate({ id: review.id, isHidden: !review.isHidden })}
-                    disabled={toggleHide.isPending}
-                    className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${
-                      review.isHidden
-                        ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                    }`}
-                    id={`toggle-review-${review.id}`}
-                  >
-                    {review.isHidden ? (
-                      <><Eye className="w-3.5 h-3.5" /> Unhide</>
-                    ) : (
-                      <><EyeOff className="w-3.5 h-3.5" /> Hide</>
-                    )}
-                  </button>
+      {isLoading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+          ))}
+        </div>
+      ) : reviews.length === 0 ? (
+        <EmptyState title="No reviews" description={showHidden ? 'There are no reviews yet.' : 'No visible reviews. Try including hidden ones.'} />
+      ) : (
+        <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+          {reviews.map((review) => (
+            <li key={review.id} className={cn('flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5', review.isHidden && 'bg-deep')}>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="text-ink">{review.customer?.name}</p>
+                  <StarRating rating={review.rating} />
+                  {review.isHidden && <Badge variant="neutral" size="sm">Hidden</Badge>}
                 </div>
+                <p className={cn('mt-2 text-sm', review.isHidden ? 'text-muted' : 'text-ink')}>{review.comment}</p>
+                <p className="tabular mt-2 text-xs text-muted">
+                  {formatDate(review.createdAt)}
+                  {review.order && <> · Order #{review.order.orderNumber}</>}
+                </p>
               </div>
-            ))}
-      </div>
-
-      {(data?.reviews || []).length === 0 && !isLoading && (
-        <div className="text-center py-12 text-stone-400">No reviews found.</div>
+              <RowAction
+                onClick={() => toggleHide.mutate({ id: review.id, isHidden: !review.isHidden })}
+                disabled={toggleHide.isPending}
+                tone={review.isHidden ? 'accent' : 'default'}
+                id={`toggle-review-${review.id}`}
+                className="self-start"
+              >
+                {review.isHidden ? <Eye className="h-3.5 w-3.5" aria-hidden="true" /> : <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />}
+                {review.isHidden ? 'Show' : 'Hide'}
+              </RowAction>
+            </li>
+          ))}
+        </ul>
       )}
 
-      {(data?.pages || 1) > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)} id="prev-page-btn">
-            Previous
-          </Button>
-          <span className="text-sm text-stone-500">Page {page} of {data?.pages}</span>
-          <Button variant="secondary" size="sm" disabled={page === data?.pages} onClick={() => setPage(p => p + 1)} id="next-page-btn">
-            Next
-          </Button>
-        </div>
-      )}
+      <Pager page={page} pages={data?.pages || 1} onChange={setPage} />
     </div>
   );
 }

@@ -1,115 +1,77 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 
+type Tone = 'neutral' | 'accent' | 'cyan' | 'warning' | 'danger' | 'rose';
+
 export type BadgeVariant =
+  | Tone
+  // Status names map straight to a tone
   | 'pending'
   | 'confirmed'
   | 'preparing'
   | 'ready'
   | 'completed'
-  | 'cancelled'
-  | 'default'
-  | 'terracotta'
-  | 'olive'
-  | 'secondary'
-  | 'warning'
-  | 'success'
-  | 'danger'
-  | 'info';
+  | 'cancelled';
+
+const TONE_OF: Record<BadgeVariant, Tone> = {
+  neutral: 'neutral',
+  accent: 'accent',
+  cyan: 'cyan',
+  warning: 'warning',
+  danger: 'danger',
+  rose: 'rose',
+  pending: 'warning',
+  confirmed: 'cyan',
+  preparing: 'cyan',
+  ready: 'accent',
+  completed: 'neutral',
+  cancelled: 'danger',
+};
+
+const TONES: Record<Tone, { pill: string; dot: string }> = {
+  neutral: { pill: 'border-line-strong bg-ink/[0.04] text-muted', dot: 'bg-muted' },
+  accent: { pill: 'border-accent/30 bg-accent/10 text-accent', dot: 'bg-accent' },
+  cyan: { pill: 'border-cyan/30 bg-cyan/10 text-cyan', dot: 'bg-cyan' },
+  warning: { pill: 'border-warning/30 bg-warning/10 text-warning', dot: 'bg-warning' },
+  danger: { pill: 'border-danger/30 bg-danger/10 text-danger', dot: 'bg-danger' },
+  rose: { pill: 'border-rose/30 bg-rose/10 text-rose', dot: 'bg-rose' },
+};
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: BadgeVariant;
+  variant?: BadgeVariant | string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   dot?: boolean;
 }
 
-export const Badge: React.FC<BadgeProps> = ({
-  children,
-  variant = 'default',
-  size = 'md',
-  className = '',
-  dot = false,
-}) => {
-  const variantStyles: Record<BadgeVariant, { bg: string; dot: string }> = {
-    pending: {
-      bg: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50',
-      dot: 'bg-amber-500',
-    },
-    warning: {
-      bg: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50',
-      dot: 'bg-amber-500',
-    },
-    confirmed: {
-      bg: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700',
-      dot: 'bg-slate-500 dark:bg-slate-400',
-    },
-    info: {
-      bg: 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50',
-      dot: 'bg-blue-500',
-    },
-    preparing: {
-      bg: 'bg-orange-50 text-terracotta-700 border-terracotta-200 dark:bg-orange-950/40 dark:text-terracotta-300 dark:border-terracotta-800/50',
-      dot: 'bg-terracotta',
-    },
-    ready: {
-      bg: 'bg-lime-50 text-olive-700 border-olive-200 dark:bg-lime-950/40 dark:text-olive-300 dark:border-olive-800/50',
-      dot: 'bg-olive',
-    },
-    completed: {
-      bg: 'bg-green-50 text-green-800 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/50',
-      dot: 'bg-green-600',
-    },
-    success: {
-      bg: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50',
-      dot: 'bg-emerald-600',
-    },
-    cancelled: {
-      bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50',
-      dot: 'bg-red-500',
-    },
-    danger: {
-      bg: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50',
-      dot: 'bg-red-500',
-    },
-    default: {
-      bg: 'bg-charcoal-100 text-charcoal-800 border-charcoal-200 dark:bg-charcoal-700 dark:text-charcoal-200 dark:border-charcoal-600',
-      dot: 'bg-charcoal-500',
-    },
-    secondary: {
-      bg: 'bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700',
-      dot: 'bg-stone-400',
-    },
-    terracotta: {
-      bg: 'bg-terracotta-50 text-terracotta-800 border-terracotta-200 dark:bg-terracotta-950/40 dark:text-terracotta-300 dark:border-terracotta-800/50',
-      dot: 'bg-terracotta',
-    },
-    olive: {
-      bg: 'bg-olive-50 text-olive-800 border-olive-200 dark:bg-olive-950/40 dark:text-olive-300 dark:border-olive-800/50',
-      dot: 'bg-olive',
-    },
-  };
-
-  const sizeStyles = {
-    sm: 'text-[10px] px-2 py-0.5',
-    md: 'text-xs px-2.5 py-0.5',
-    lg: 'text-sm px-3 py-1',
-  };
-
-  const current = variantStyles[variant.toLowerCase() as BadgeVariant] || variantStyles.default;
-
+export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', size = 'md', className, dot = false }) => {
+  const tone = TONE_OF[(variant as string).toLowerCase() as BadgeVariant] ?? 'neutral';
+  const styles = TONES[tone];
   return (
     <span
       className={cn(
-        'inline-flex items-center font-medium rounded-full border',
-        sizeStyles[size],
-        current.bg,
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-medium',
+        size === 'lg' ? 'px-3 py-1 text-sm' : 'px-2.5 py-0.5 text-xs',
+        styles.pill,
         className
       )}
     >
-      {dot && <span className={cn('w-1.5 h-1.5 rounded-full mr-1.5', current.dot)} />}
+      {dot && <span className={cn('h-1.5 w-1.5 rounded-full', styles.dot)} aria-hidden="true" />}
       {children}
     </span>
   );
 };
+
+/** "PREPARING" -> "Preparing", "DINE_IN" -> "Dine-in" */
+export const humanize = (value: string) => {
+  const s = value.toLowerCase().replace(/_/g, value === 'DINE_IN' ? '-' : ' ');
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+/** Badge for an order or reservation status, consistently colored and labelled. */
+export const StatusBadge: React.FC<{ status: string; size?: 'sm' | 'md'; className?: string }> = ({ status, size, className }) => (
+  <Badge variant={status.toLowerCase()} size={size} dot className={className}>
+    {humanize(status)}
+  </Badge>
+);

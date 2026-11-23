@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Check } from 'lucide-react';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { useTableAvailability } from '../../hooks/useTableAvailability';
+import { hoursSummary } from '../../utils/openingHours';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
-import { Card } from '../../components/ui/Card';
 import { toast } from 'sonner';
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle2 } from 'lucide-react';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -49,187 +49,102 @@ export const ContactPage: React.FC = () => {
 
   const activeSocials = socialLinks.filter((s) => s.isActive && s.url && s.url.trim().length > 0);
 
+  const hours = hoursSummary(settings.openingHours);
+  const tel = settings.phone ? settings.phone.replace(/[^0-9+]/g, '') : '';
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-12">
-      {/* Title */}
-      <div className="text-center max-w-xl mx-auto space-y-3">
-        <span className="text-xs font-bold text-terracotta uppercase tracking-wider block">
-          Customer Service & Inquiries
-        </span>
-        <h1 className="text-3xl sm:text-5xl font-serif font-bold text-charcoal dark:text-white tracking-tight">
-          Contact Euroshub Kitchen
-        </h1>
-        <p className="text-xs sm:text-sm text-charcoal-500 dark:text-charcoal-400 leading-relaxed">
-          Have inquiries regarding large takeaway orders, table availability, or our menu items? Reach out to us directly.
-        </p>
-      </div>
+    <div className="container-content pb-24 pt-10 sm:pt-14">
+      <h1 className="font-serif text-4xl text-ink">Contact</h1>
+      <p className="mt-3 max-w-xl text-base text-muted">For large orders, table questions or anything about the menu.</p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Contact Info & Hours Cards (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          <Card className="p-6 space-y-5">
-            <h3 className="font-serif font-bold text-lg text-charcoal dark:text-white pb-3 border-b border-bistro-border dark:border-charcoal-700">
-              Location & Details
-            </h3>
-
-            <div className="space-y-4 text-xs">
-              <div className="flex items-start space-x-3">
-                <MapPin className="w-5 h-5 text-terracotta flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-charcoal-900 dark:text-charcoal-100">Address</h4>
-                  <p className="text-charcoal-600 dark:text-charcoal-300 mt-0.5">
-                    {settings.address || 'Kohistan Tower, Saddar, Rawalpindi, Office 609'}
-                  </p>
-                  <p className="text-charcoal-400 dark:text-charcoal-500 mt-0.5">
-                    Kohistan Tower commercial complex, Saddar.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <Phone className="w-5 h-5 text-terracotta flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-charcoal-900 dark:text-charcoal-100">Direct Telephone</h4>
-                  <a
-                    href={`tel:${settings.phone.replace(/[^0-9+]/g, '')}`}
-                    className="text-terracotta hover:underline font-medium"
-                  >
-                    {settings.phone}
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <Mail className="w-5 h-5 text-terracotta flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-charcoal-900 dark:text-charcoal-100">Email Address</h4>
-                  <a
-                    href={`mailto:${settings.email}`}
-                    className="text-terracotta hover:underline font-medium"
-                  >
-                    {settings.email || 'haider1.euroshub@gmail.com'}
-                  </a>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 space-y-4">
-            <h3 className="font-serif font-bold text-lg text-charcoal dark:text-white pb-3 border-b border-bistro-border dark:border-charcoal-700 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-terracotta" /> Kitchen Hours
-            </h3>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1 border-b border-bistro-border dark:border-charcoal-700">
-                <span className="text-charcoal-600 dark:text-charcoal-300 font-medium">Monday – Sunday:</span>
-                <span className="font-bold text-charcoal-900 dark:text-charcoal-100">{openingHoursText}</span>
-              </div>
-              <p className="text-[11px] text-charcoal-400 dark:text-charcoal-500 pt-1">
-                Dine-in seating across {totalTables} tables and counter takeaway available daily.
-              </p>
-            </div>
-
-            {activeSocials.length > 0 && (
-              <div className="pt-3 border-t border-bistro-border dark:border-charcoal-700">
-                <h4 className="text-xs font-bold text-charcoal dark:text-white mb-2">Connect Online</h4>
-                <div className="flex items-center space-x-2">
-                  {activeSocials.map((s) => (
-                    <a
-                      key={s.id}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-2.5 py-1 bg-bistro-bg dark:bg-charcoal-700 text-charcoal-700 dark:text-charcoal-200 text-xs font-semibold rounded border border-bistro-border dark:border-charcoal-600 hover:bg-terracotta hover:text-white transition-colors"
-                    >
-                      {s.platform}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </Card>
-        </div>
-
-        {/* Contact Form (7 cols) */}
-        <div className="lg:col-span-7">
-          <Card className="p-6 sm:p-8 space-y-6">
+      <div className="mt-10 grid items-start gap-12 lg:grid-cols-[1fr_1.3fr]">
+        <dl className="space-y-8 text-base">
+          {settings.phone && (
             <div>
-              <h3 className="font-serif font-bold text-xl text-charcoal dark:text-white">Send Us a Message</h3>
-              <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-1">
-                Fill out the form below and our team will get back to you.
-              </p>
+              <dt className="eyebrow">Phone</dt>
+              <dd className="mt-2">
+                <a href={`tel:${tel}`} className="inline-flex min-h-11 items-center text-ink underline-offset-4 hover:underline">
+                  {settings.phone}
+                </a>
+              </dd>
             </div>
-
-            {submitted ? (
-              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-8 text-center space-y-3">
-                <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
-                <h4 className="font-serif font-bold text-emerald-900 dark:text-emerald-200 text-base">Message Sent!</h4>
-                <p className="text-xs text-emerald-700 dark:text-emerald-300 max-w-sm mx-auto">
-                  Thank you for reaching out to Euroshub Kitchen. We will respond to your email shortly.
+          )}
+          {settings.email && (
+            <div>
+              <dt className="eyebrow">Email</dt>
+              <dd className="mt-2">
+                <a href={`mailto:${settings.email}`} className="inline-flex min-h-11 items-center break-all text-ink underline-offset-4 hover:underline">
+                  {settings.email}
+                </a>
+              </dd>
+            </div>
+          )}
+          {settings.address && (
+            <div>
+              <dt className="eyebrow">Address</dt>
+              <dd className="mt-2 text-ink">{settings.address}</dd>
+            </div>
+          )}
+          <div>
+            <dt className="eyebrow">Hours</dt>
+            <dd className="mt-2 space-y-1">
+              {hours.map((h) => (
+                <p key={h.label} className="flex justify-between gap-4 sm:max-w-xs">
+                  <span className="text-muted">{h.label}</span>
+                  <span className="tabular text-ink">{h.value}</span>
                 </p>
-                <Button variant="outline" size="sm" onClick={() => setSubmitted(false)}>
-                  Send Another Message
-                </Button>
+              ))}
+            </dd>
+          </div>
+          {activeSocials.length > 0 && (
+            <div>
+              <dt className="eyebrow">Elsewhere</dt>
+              <dd className="mt-2 flex flex-wrap gap-x-5">
+                {activeSocials.map((s) => (
+                  <a
+                    key={s.id}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center capitalize text-ink underline-offset-4 hover:underline"
+                  >
+                    {s.platform}
+                  </a>
+                ))}
+              </dd>
+            </div>
+          )}
+        </dl>
+
+        <section aria-labelledby="contact-form-title" className="rounded-lg border border-line bg-surface p-5 sm:p-8">
+          <h2 id="contact-form-title" className="font-serif text-2xl text-ink">
+            Send a message
+          </h2>
+
+          {submitted ? (
+            <div className="mt-6" role="status">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-accent" aria-hidden="true">
+                <Check className="h-5 w-5" />
+              </span>
+              <p className="mt-4 text-base text-ink">Thanks, your message is in.</p>
+              <Button variant="secondary" size="sm" className="mt-6" onClick={() => setSubmitted(false)}>
+                Send another
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Input label="Name" autoComplete="name" required {...register('name')} error={errors.name?.message} />
+                <Input label="Email" type="email" autoComplete="email" required {...register('email')} error={errors.email?.message} />
               </div>
-            ) : (
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-charcoal dark:text-charcoal-200 mb-1">
-                      Your Name <span className="text-red-500">*</span>
-                    </label>
-                    <Input placeholder="Ali Khan" {...register('name')} error={errors.name?.message} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-charcoal dark:text-charcoal-200 mb-1">
-                      Your Email <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="ali@example.com"
-                      {...register('email')}
-                      error={errors.email?.message}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-charcoal dark:text-charcoal-200 mb-1">
-                    Subject <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="Large Order / Table Inquiry"
-                    {...register('subject')}
-                    error={errors.subject?.message}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-charcoal dark:text-charcoal-200 mb-1">
-                    Message <span className="text-red-500">*</span>
-                  </label>
-                  <Textarea
-                    rows={5}
-                    placeholder="Write your message here..."
-                    {...register('message')}
-                    error={errors.message?.message}
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  isLoading={isSubmitting}
-                  rightIcon={<Send className="w-4 h-4" />}
-                >
-                  Send Message
-                </Button>
-              </form>
-            )}
-          </Card>
-        </div>
+              <Input label="Subject" required {...register('subject')} error={errors.subject?.message} />
+              <Textarea label="Message" rows={5} required {...register('message')} error={errors.message?.message} />
+              <Button type="submit" size="lg" isLoading={isSubmitting}>
+                Send message
+              </Button>
+            </form>
+          )}
+        </section>
       </div>
     </div>
   );

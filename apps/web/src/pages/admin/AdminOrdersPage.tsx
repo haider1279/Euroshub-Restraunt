@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { RefreshCcw, Search } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiRequest } from '../../api/client';
 import { Order, OrderStatus } from '../../types';
 import { formatCurrency } from '../../utils/currency';
-import { Badge } from '../../components/ui/Badge';
+import { formatDate } from '../../utils/date';
+import { StatusBadge, humanize } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Select } from '../../components/ui/Select';
+import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { Search, Filter, RefreshCcw } from 'lucide-react';
-import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
-import { formatDate } from '../../utils/date';
+import { TableShell, THead, Th, Td, Tr, TableMessage, RowAction, Pager } from '../../components/ui/DataTable';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -90,133 +92,117 @@ export default function AdminOrdersPage() {
     );
   });
 
+  const orders = filteredOrders;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-charcoal">Orders</h1>
-          <p className="text-stone-500 mt-1">{data?.total ?? 0} orders total</p>
+          <h1 className="font-serif text-2xl text-ink">Orders</h1>
+          <p className="tabular mt-1 text-sm text-muted">
+            {data?.total ?? 0} total · refreshes every 15 seconds
+          </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => refetch()} id="refresh-orders-btn">
-          <RefreshCcw className="w-4 h-4 mr-1.5" /> Refresh
+        <Button variant="secondary" size="sm" onClick={() => refetch()} id="refresh-orders-btn" leftIcon={<RefreshCcw className="h-4 w-4" />}>
+          Refresh
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-          <input
-            type="text"
-            placeholder="Search by order # or customer..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/30 focus:border-terracotta"
-            id="order-search-input"
-          />
-        </div>
+      <div className="grid gap-3 sm:grid-cols-[1fr_180px_180px]">
+        <Input
+          type="search"
+          aria-label="Search orders"
+          placeholder="Order number, customer name or email"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          leftIcon={<Search />}
+          id="order-search-input"
+        />
         <Select
+          aria-label="Filter by status"
           options={STATUS_OPTIONS}
           value={status}
           onChange={(v: any) => { setStatus(typeof v === 'string' ? v : v?.target?.value || ''); setPage(1); }}
-          className="w-40"
           id="order-status-filter"
         />
         <Select
+          aria-label="Filter by type"
           options={TYPE_OPTIONS}
           value={type}
           onChange={(v: any) => { setType(typeof v === 'string' ? v : v?.target?.value || ''); setPage(1); }}
-          className="w-40"
           id="order-type-filter"
         />
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-stone-50 border-b border-stone-200">
-                <th className="text-left px-5 py-3 font-semibold text-stone-500 text-xs uppercase tracking-wide">Order</th>
-                <th className="text-left px-5 py-3 font-semibold text-stone-500 text-xs uppercase tracking-wide">Customer</th>
-                <th className="text-left px-5 py-3 font-semibold text-stone-500 text-xs uppercase tracking-wide">Type</th>
-                <th className="text-left px-5 py-3 font-semibold text-stone-500 text-xs uppercase tracking-wide">Total</th>
-                <th className="text-left px-5 py-3 font-semibold text-stone-500 text-xs uppercase tracking-wide">Status</th>
-                <th className="text-left px-5 py-3 font-semibold text-stone-500 text-xs uppercase tracking-wide">Date</th>
-                <th className="text-left px-5 py-3 font-semibold text-stone-500 text-xs uppercase tracking-wide">Actions</th>
+      <TableShell>
+        <THead>
+          <tr>
+            <Th>Order</Th>
+            <Th>Customer</Th>
+            <Th>Type</Th>
+            <Th className="text-right">Total</Th>
+            <Th>Status</Th>
+            <Th>Placed</Th>
+            <Th>Move to</Th>
+          </tr>
+        </THead>
+        <tbody>
+          {isLoading ? (
+            [...Array(8)].map((_, i) => (
+              <tr key={i} className="border-b border-line">
+                {[...Array(7)].map((_, j) => (
+                  <Td key={j}>
+                    <Skeleton className="h-5 w-full" />
+                  </Td>
+                ))}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100">
-              {isLoading
-                ? [...Array(8)].map((_, i) => (
-                    <tr key={i}>
-                      {[...Array(7)].map((_, j) => (
-                        <td key={j} className="px-5 py-3"><Skeleton className="h-5 w-full" /></td>
-                      ))}
-                    </tr>
-                  ))
-                : filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-stone-50/50 transition-colors">
-                      <td className="px-5 py-3 font-semibold text-terracotta">
-                        <Link to={`/admin/orders/${order.id}`} className="hover:underline" id={`order-link-${order.id}`}>
-                          #{order.orderNumber}
-                        </Link>
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="font-medium text-charcoal">{order.customer?.name}</div>
-                        <div className="text-xs text-stone-400">{order.customer?.email}</div>
-                      </td>
-                      <td className="px-5 py-3">
-                        <Badge variant="secondary" size="sm">{order.type.replace('_', ' ')}</Badge>
-                      </td>
-                      <td className="px-5 py-3 font-semibold">{formatCurrency(order.total)}</td>
-                      <td className="px-5 py-3">
-                        <Badge variant={STATUS_BADGE[order.status] as any} size="sm">{order.status}</Badge>
-                      </td>
-                      <td className="px-5 py-3 text-stone-500 text-xs">
-                        {formatDate(order.createdAt)}
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {NEXT_STATUSES[order.status].map((next) => (
-                            <button
-                              key={next}
-                              id={`order-${order.id}-status-${next}`}
-                              onClick={() => updateStatus.mutate({ orderId: order.id, newStatus: next })}
-                              disabled={updateStatus.isPending}
-                              className="text-xs px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-terracotta hover:text-white font-medium transition-colors disabled:opacity-50"
-                            >
-                              → {next}
-                            </button>
-                          ))}
-                          {NEXT_STATUSES[order.status].length === 0 && (
-                            <span className="text-xs text-stone-400">Terminal</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
-        </div>
+            ))
+          ) : orders.length === 0 ? (
+            <TableMessage colSpan={7}>{search || status || type ? 'No orders match these filters.' : 'No orders yet.'}</TableMessage>
+          ) : (
+            orders.map((order) => (
+              <Tr key={order.id}>
+                <Td>
+                  <Link to={`/admin/orders/${order.id}`} className="tabular font-mono text-ink underline-offset-4 hover:underline" id={`order-link-${order.id}`}>
+                    #{order.orderNumber}
+                  </Link>
+                </Td>
+                <Td>
+                  <div className="text-ink">{order.customer?.name}</div>
+                  <div className="text-xs text-muted">{order.customer?.email}</div>
+                </Td>
+                <Td className="whitespace-nowrap text-muted">
+                  {humanize(order.type)}
+                  {order.tableNumber ? ` · T${order.tableNumber}` : ''}
+                </Td>
+                <Td className="tabular whitespace-nowrap text-right">{formatCurrency(order.total)}</Td>
+                <Td>
+                  <StatusBadge status={order.status} size="sm" />
+                </Td>
+                <Td className="tabular whitespace-nowrap text-muted">{formatDate(order.createdAt)}</Td>
+                <Td>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {NEXT_STATUSES[order.status].map((next) => (
+                      <RowAction
+                        key={next}
+                        id={`order-${order.id}-status-${next}`}
+                        tone={next === 'CANCELLED' ? 'danger' : 'default'}
+                        onClick={() => updateStatus.mutate({ orderId: order.id, newStatus: next })}
+                        disabled={updateStatus.isPending}
+                      >
+                        {next === 'CANCELLED' ? 'Cancel' : humanize(next)}
+                      </RowAction>
+                    ))}
+                    {NEXT_STATUSES[order.status].length === 0 && <span className="text-xs text-muted">Closed</span>}
+                  </div>
+                </Td>
+              </Tr>
+            ))
+          )}
+        </tbody>
+      </TableShell>
 
-        {filteredOrders.length === 0 && !isLoading && (
-          <div className="text-center py-12 text-stone-400">No orders found.</div>
-        )}
-      </div>
-
-      {/* Pagination */}
-      {(data?.pages || 1) > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)} id="prev-page-btn">
-            Previous
-          </Button>
-          <span className="text-sm text-stone-500">Page {page} of {data?.pages}</span>
-          <Button variant="secondary" size="sm" disabled={page === data?.pages} onClick={() => setPage(p => p + 1)} id="next-page-btn">
-            Next
-          </Button>
-        </div>
-      )}
+      <Pager page={page} pages={data?.pages || 1} onChange={setPage} />
     </div>
   );
 }

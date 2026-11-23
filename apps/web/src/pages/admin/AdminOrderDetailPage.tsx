@@ -1,15 +1,18 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiRequest } from '../../api/client';
 import { Order, OrderStatus } from '../../types';
 import { formatCurrency } from '../../utils/currency';
-import { Badge } from '../../components/ui/Badge';
+import { formatLongDateTime } from '../../utils/date';
+import { StatusBadge, humanize } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { ArrowLeft, Phone, MapPin, UtensilsCrossed, Clock } from 'lucide-react';
-import { toast } from 'sonner';
-import { formatDate, formatLongDateTime } from '../../utils/date';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { Timeline } from '../../components/ui/Timeline';
+import { TableShell, THead, Th, Td, Tr } from '../../components/ui/DataTable';
 
 const STATUS_BADGE: Record<string, string> = {
   PENDING: 'warning',
@@ -57,44 +60,43 @@ export default function AdminOrderDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-3xl">
+      <div className="max-w-4xl space-y-6">
         <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
-        <Skeleton className="h-48 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </div>
     );
   }
 
-  if (!order) return <div className="text-stone-500">Order not found.</div>;
+  if (!order) {
+    return <EmptyState title="Order not found" description="It may have been removed." actionLabel="Back to orders" actionHref="/admin/orders" />;
+  }
 
   const nextStatuses = NEXT_STATUSES[order.status];
+  const addonNames = (snapshot: unknown): string[] =>
+    Array.isArray(snapshot) ? (snapshot.map((a: { name?: string }) => a?.name).filter(Boolean) as string[]) : [];
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <button
+        type="button"
         onClick={() => navigate('/admin/orders')}
-        className="flex items-center gap-2 text-stone-500 hover:text-terracotta transition-colors text-sm"
+        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-ink"
         id="back-to-orders-btn"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to Orders
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Orders
       </button>
 
-      {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-charcoal">#{order.orderNumber}</h1>
-          <p className="text-stone-500 mt-1">
-            {formatLongDateTime(order.createdAt)}
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="tabular font-mono text-2xl text-ink">#{order.orderNumber}</h1>
+            <StatusBadge status={order.status} />
+          </div>
+          <p className="mt-1 text-sm text-muted">{formatLongDateTime(order.createdAt)}</p>
         </div>
-        <Badge variant={STATUS_BADGE[order.status] as any} size="lg">{order.status}</Badge>
-      </div>
-
-      {/* Status Actions */}
-      {nextStatuses.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-          <p className="text-sm font-semibold text-amber-800 mb-3">Update Order Status</p>
-          <div className="flex gap-2 flex-wrap">
+        {nextStatuses.length > 0 && (
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Move order to">
             {nextStatuses.map((next) => (
               <Button
                 key={next}
@@ -104,107 +106,106 @@ export default function AdminOrderDetailPage() {
                 onClick={() => updateStatus.mutate(next)}
                 isLoading={updateStatus.isPending}
               >
-                Mark as {next}
+                {next === 'CANCELLED' ? 'Cancel order' : `Mark ${humanize(next).toLowerCase()}`}
               </Button>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Customer & Order Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-stone-500 uppercase tracking-wide mb-3">Customer</h2>
-          <p className="font-semibold text-charcoal">{order.customer?.name}</p>
-          <p className="text-sm text-stone-500">{order.customer?.email}</p>
+      <section className="rounded-lg border border-line bg-surface p-5 sm:p-6" aria-label="Order progress">
+        <Timeline currentStatus={order.status} />
+      </section>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="rounded-lg border border-line bg-surface p-5">
+          <h2 className="text-xs uppercase tracking-[0.08em] text-muted">Customer</h2>
+          <p className="mt-3 text-ink">{order.customer?.name}</p>
+          <p className="text-sm text-muted">{order.customer?.email}</p>
           {order.contactPhone && (
-            <div className="flex items-center gap-1.5 mt-2 text-sm text-stone-500">
-              <Phone className="w-3.5 h-3.5" /> {order.contactPhone}
-            </div>
+            <a href={`tel:${order.contactPhone}`} className="mt-2 inline-flex min-h-11 items-center text-sm text-ink underline-offset-4 hover:underline sm:min-h-0">
+              {order.contactPhone}
+            </a>
           )}
-        </div>
+        </section>
 
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-stone-500 uppercase tracking-wide mb-3">Order Info</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-stone-500">Type</span>
-              <Badge variant="secondary" size="sm">{order.type.replace('_', ' ')}</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-stone-500">Payment</span>
-              <span className="font-medium">{order.paymentMethod.replace(/_/g, ' ')}</span>
+        <section className="rounded-lg border border-line bg-surface p-5">
+          <h2 className="text-xs uppercase tracking-[0.08em] text-muted">Order</h2>
+          <dl className="mt-3 space-y-2 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Type</dt>
+              <dd className="text-ink">{humanize(order.type)}</dd>
             </div>
             {order.tableNumber && (
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500">Table</span>
-                <span className="font-medium flex items-center gap-1">
-                  <UtensilsCrossed className="w-3.5 h-3.5" /> {order.tableNumber}
-                </span>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Table</dt>
+                <dd className="tabular text-ink">{order.tableNumber}</dd>
               </div>
             )}
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Payment</dt>
+              <dd className="text-ink">{order.paymentMethod === 'PAY_AT_RESTAURANT' ? 'Pay at restaurant' : humanize(order.paymentMethod)}</dd>
+            </div>
             {order.deliveryAddress && (
-              <div className="flex items-start gap-1.5 mt-1 text-stone-500">
-                <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                <span>{order.deliveryAddress}</span>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Address</dt>
+                <dd className="text-right text-ink">{order.deliveryAddress}</dd>
               </div>
             )}
-            {order.deliveryNotes && (
-              <p className="text-xs italic text-stone-400 mt-1">"{order.deliveryNotes}"</p>
-            )}
-          </div>
-        </div>
+          </dl>
+          {order.deliveryNotes && <p className="mt-3 border-l-2 border-line-strong pl-3 text-sm text-muted">{order.deliveryNotes}</p>}
+        </section>
       </div>
 
-      {/* Order Items */}
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-stone-100">
-          <h2 className="font-semibold text-charcoal">Order Items</h2>
-        </div>
-        <div className="divide-y divide-stone-100">
-          {order.items.map((item) => (
-            <div key={item.id} className="px-5 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-terracotta/10 rounded-lg flex items-center justify-center text-terracotta font-bold text-sm">
-                  {item.quantity}
-                </div>
-                <div>
-                  <p className="font-medium text-charcoal">
-                    {item.nameAtPurchase}
-                    {item.variantNameAtPurchase && (
-                      <span className="text-terracotta font-semibold text-xs ml-2 px-2 py-0.5 bg-terracotta/10 rounded">
-                        {item.variantNameAtPurchase}
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-stone-400">
-                    {formatCurrency(item.priceAtPurchase)} each (Snapshot)
-                  </p>
-                </div>
+      <TableShell
+        footer={
+          <dl className="space-y-2 border-t border-line bg-deep px-4 py-4 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-muted">Subtotal</dt>
+              <dd className="tabular text-ink">{formatCurrency(order.subtotal)}</dd>
+            </div>
+            {Number(order.deliveryFee) > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-muted">Delivery fee</dt>
+                <dd className="tabular text-ink">{formatCurrency(order.deliveryFee)}</dd>
               </div>
-              <p className="font-semibold text-charcoal">
-                {formatCurrency(Number(item.priceAtPurchase) * item.quantity)}
-              </p>
+            )}
+            <div className="flex justify-between border-t border-line pt-2 text-base">
+              <dt className="text-ink">Total</dt>
+              <dd className="tabular text-ink">{formatCurrency(order.total)}</dd>
             </div>
-          ))}
-        </div>
-        <div className="border-t border-stone-200 p-5 space-y-2 bg-stone-50/50">
-          <div className="flex justify-between text-sm text-stone-500">
-            <span>Subtotal</span>
-            <span>{formatCurrency(order.subtotal)}</span>
-          </div>
-          {Number(order.deliveryFee) > 0 && (
-            <div className="flex justify-between text-sm text-stone-500">
-              <span>Delivery Fee</span>
-              <span>{formatCurrency(order.deliveryFee)}</span>
-            </div>
-          )}
-          <div className="flex justify-between font-bold text-charcoal text-base pt-2 border-t border-stone-200">
-            <span>Total</span>
-            <span className="text-terracotta font-bold">{formatCurrency(order.total)}</span>
-          </div>
-        </div>
-      </div>
+          </dl>
+        }
+      >
+        <THead>
+          <tr>
+            <Th className="w-16">Qty</Th>
+            <Th>Item</Th>
+            <Th className="text-right">Each</Th>
+            <Th className="text-right">Line total</Th>
+          </tr>
+        </THead>
+        <tbody>
+          {order.items.map((item) => {
+            const extras = addonNames(item.addonsSnapshot);
+            return (
+              <Tr key={item.id}>
+                <Td className="tabular">{item.quantity}</Td>
+                <Td>
+                  <p className="text-ink">{item.nameAtPurchase}</p>
+                  {(item.variantNameAtPurchase || extras.length > 0) && (
+                    <p className="text-sm text-muted">
+                      {[item.variantNameAtPurchase, ...extras.map((n) => `+ ${n}`)].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
+                </Td>
+                <Td className="tabular text-right text-muted">{formatCurrency(item.priceAtPurchase)}</Td>
+                <Td className="tabular text-right">{formatCurrency(Number(item.priceAtPurchase) * item.quantity)}</Td>
+              </Tr>
+            );
+          })}
+        </tbody>
+      </TableShell>
     </div>
   );
 }

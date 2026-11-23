@@ -1,80 +1,105 @@
 import React from 'react';
+import { Link, LinkProps } from 'react-router-dom';
 import { cn } from '../../utils/cn';
+import { Spinner } from './Spinner';
+
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'danger';
+
+export type ButtonSize = 'sm' | 'md' | 'lg';
+
+const VARIANTS: Record<ButtonVariant, string> = {
+  primary: 'bg-ink text-night hover:bg-ink/90 disabled:bg-ink/40',
+  secondary:
+    'border border-line-strong bg-transparent text-ink hover:border-ink/30 hover:bg-ink/[0.04]',
+  ghost: 'bg-transparent text-muted hover:bg-ink/[0.06] hover:text-ink',
+  danger: 'border border-danger/40 bg-danger/10 text-danger hover:bg-danger/[0.16] hover:border-danger/60',
+};
+
+// Mobile keeps a 44px minimum tap target; small buttons tighten from 640px up.
+const SIZES: Record<ButtonSize, string> = {
+  sm: 'h-11 sm:h-9 px-4 text-sm gap-1.5',
+  md: 'h-11 px-5 text-sm gap-2',
+  lg: 'h-12 px-6 text-base gap-2',
+};
+
+export function buttonClasses({
+  variant = 'primary',
+  size = 'md',
+  className,
+}: { variant?: ButtonVariant; size?: ButtonSize; className?: string } = {}) {
+  return cn(
+    'pressable inline-flex select-none items-center justify-center whitespace-nowrap rounded-full font-medium',
+    'disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
+    VARIANTS[variant],
+    SIZES[size],
+    className
+  );
+}
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
 }
 
-export const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  leftIcon,
-  rightIcon,
-  className = '',
-  disabled,
-  ...props
-}) => {
-  const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-md transition-bistro focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none dark:focus:ring-offset-charcoal-900';
-
-  const sizeStyles = {
-    sm: 'text-xs px-3 py-1.5 gap-1.5',
-    md: 'text-sm px-4 py-2 gap-2',
-    lg: 'text-base px-6 py-3 gap-2.5',
-  };
-
-  const variantStyles = {
-    primary:
-      'bg-terracotta text-white hover:bg-terracotta-600 active:bg-terracotta-700 focus:ring-terracotta shadow-soft',
-    secondary:
-      'bg-charcoal-800 text-white hover:bg-charcoal-900 active:bg-black focus:ring-charcoal shadow-soft dark:bg-charcoal-700 dark:hover:bg-charcoal-600',
-    outline:
-      'border border-bistro-border bg-white text-charcoal-800 hover:bg-bistro-bg hover:border-charcoal-300 focus:ring-terracotta dark:bg-charcoal-800 dark:text-charcoal-100 dark:border-charcoal-700 dark:hover:bg-charcoal-700 dark:hover:border-charcoal-600',
-    ghost:
-      'bg-transparent text-charcoal-700 hover:bg-charcoal-100 hover:text-charcoal-900 focus:ring-charcoal dark:text-charcoal-300 dark:hover:bg-charcoal-800 dark:hover:text-white',
-    destructive:
-      'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-soft dark:bg-red-700 dark:hover:bg-red-600',
-    danger:
-      'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-soft dark:bg-red-700 dark:hover:bg-red-600',
-  };
-
-  return (
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      children,
+      variant = 'primary',
+      size = 'md',
+      isLoading = false,
+      leftIcon,
+      rightIcon,
+      className,
+      disabled,
+      ...props
+    },
+    ref
+  ) => (
     <button
-      className={cn(baseStyles, sizeStyles[size], variantStyles[variant], className)}
+      ref={ref}
+      className={buttonClasses({ variant, size, className })}
       disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
       {...props}
     >
-      {isLoading && (
-        <svg
-          className="animate-spin -ml-1 mr-2 h-4 w-4 text-current"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
-      )}
-      {!isLoading && leftIcon}
+      {isLoading ? <Spinner className="h-4 w-4" /> : leftIcon}
       <span>{children}</span>
       {!isLoading && rightIcon}
     </button>
-  );
-};
+  )
+);
+Button.displayName = 'Button';
+
+interface ButtonLinkProps extends LinkProps {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  disabled?: boolean;
+}
+
+/** A router link styled as a button. Use instead of nesting <Button> inside <Link>. */
+export const ButtonLink = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
+  ({ variant = 'primary', size = 'md', leftIcon, rightIcon, disabled, className, children, ...props }, ref) => (
+    <Link
+      ref={ref}
+      className={buttonClasses({ variant, size, className: className as string })}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
+      {...props}
+    >
+      {leftIcon}
+      <span>{children}</span>
+      {rightIcon}
+    </Link>
+  )
+);
+ButtonLink.displayName = 'ButtonLink';

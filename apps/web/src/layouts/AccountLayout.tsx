@@ -1,81 +1,72 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, ShoppingBag, Calendar, Star, Settings, LogOut, ArrowLeft } from 'lucide-react';
+import { SiteHeader } from '../components/layout/SiteHeader';
+import { SiteFooter } from '../components/layout/SiteFooter';
+import { PageSpinner } from '../components/ui/Spinner';
+import { Button } from '../components/ui/Button';
+import { cn } from '../utils/cn';
+
+const MENU = [
+  { label: 'Overview', path: '/account', end: true },
+  { label: 'Orders', path: '/account/orders' },
+  { label: 'Reservations', path: '/account/reservations' },
+  { label: 'Reviews', path: '/account/reviews' },
+  { label: 'Settings', path: '/account/settings' },
+];
 
 export const AccountLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  const menuItems = [
-    { label: 'Overview', path: '/account', icon: LayoutDashboard },
-    { label: 'Order History', path: '/account/orders', icon: ShoppingBag },
-    { label: 'Reservations', path: '/account/reservations', icon: Calendar },
-    { label: 'My Reviews', path: '/account/reviews', icon: Star },
-    { label: 'Account Settings', path: '/account/settings', icon: Settings },
-  ];
-
-  const isCurrent = (path: string) => {
-    if (path === '/account') return location.pathname === '/account';
-    return location.pathname.startsWith(path);
-  };
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      {/* Header with back link */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-bistro-border dark:border-charcoal-700 gap-4">
-        <div>
-          <Link
-            to="/"
-            className="inline-flex items-center text-xs font-medium text-charcoal-500 dark:text-charcoal-400 hover:text-terracotta mb-2 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Return to Restaurant Website
-          </Link>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-charcoal dark:text-white">
-            Welcome, {user?.name}
-          </h1>
-          <p className="text-xs sm:text-sm text-charcoal-500 dark:text-charcoal-400 mt-1">
-            Manage your past dining experiences, active deliveries, and account preferences.
-          </p>
-        </div>
-        <button
-          onClick={logout}
-          className="inline-flex items-center text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:border-red-800/50 dark:text-red-400 dark:hover:bg-red-900/40 px-3 py-1.5 rounded-md border border-red-200 transition-colors w-fit"
-        >
-          <LogOut className="w-3.5 h-3.5 mr-1.5" /> Sign Out
-        </button>
-      </div>
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main id="main" tabIndex={-1} className="flex-1 pt-16">
+        <div className="container-content py-10 sm:py-14">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow">Your account</p>
+              <h1 className="mt-2 font-serif text-3xl text-ink">{user?.name}</h1>
+              {user?.email && <p className="mt-1 text-sm text-muted">{user.email}</p>}
+            </div>
+            <Button variant="ghost" size="sm" onClick={logout}>
+              Sign out
+            </Button>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar Nav */}
-        <div className="lg:col-span-1">
-          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible space-x-2 lg:space-x-0 lg:space-y-1 bg-white dark:bg-charcoal-800 p-2 sm:p-3 rounded-xl border border-bistro-border dark:border-charcoal-700 shadow-soft">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const active = isCurrent(item.path);
-              return (
-                <Link
+          <div className="mt-8 grid gap-8 lg:grid-cols-[200px_1fr] lg:gap-12">
+            <nav aria-label="Account" className="scroll-row -mx-4 border-b border-line px-4 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:border-b-0 lg:px-0">
+              {MENU.map((item) => (
+                <NavLink
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-bistro whitespace-nowrap ${
-                    active
-                      ? 'bg-terracotta text-white shadow-sm'
-                      : 'text-charcoal-700 dark:text-charcoal-200 hover:bg-bistro-bg dark:hover:bg-charcoal-700 hover:text-terracotta'
-                  }`}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    cn(
+                      '-mb-px inline-flex min-h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-3 text-sm transition-colors lg:mb-0 lg:rounded lg:border-b-0',
+                      isActive
+                        ? 'border-accent text-ink lg:bg-ink/[0.06]'
+                        : 'border-transparent text-muted hover:text-ink lg:hover:bg-ink/[0.03]'
+                    )
+                  }
                 >
-                  <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-charcoal-400'}`} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
 
-        {/* Content Pane */}
-        <div className="lg:col-span-3">
-          <Outlet />
+            <div className="min-w-0">
+              <Suspense fallback={<PageSpinner />}>
+                <div key={location.pathname} className="page-enter">
+                  <Outlet />
+                </div>
+              </Suspense>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
+      <SiteFooter />
     </div>
   );
 };

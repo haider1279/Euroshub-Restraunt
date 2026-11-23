@@ -1,37 +1,30 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { formatCurrency } from '../../utils/currency';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { EmptyState } from '../../components/ui/EmptyState';
+import { ButtonLink, Button } from '../../components/ui/Button';
+import { EmptyState, Notice } from '../../components/ui/EmptyState';
 import { FoodImage } from '../../components/ui/FoodImage';
-import {
-  ShoppingBag,
-  Trash2,
-  Plus,
-  Minus,
-  ArrowRight,
-  ArrowLeft,
-  ShieldCheck,
-  AlertTriangle,
-} from 'lucide-react';
+import { QuantityStepper } from '../../components/ui/QuantityStepper';
 
 export const CartPage: React.FC = () => {
-  const { items, subtotal, deliveryFee, total, updateQuantity, removeItem, clearCart } = useCart();
+  const { items, subtotal, deliveryFee, updateQuantity, removeItem, clearCart } = useCart();
   const { settings } = useRestaurant();
 
   const hasUnavailableItems = items.some((i) => !i.menuItem.isAvailable);
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16">
+      <div className="container-content py-16 sm:py-24">
+        <h1 className="font-serif text-4xl text-ink">Your cart</h1>
         <EmptyState
-          icon={<ShoppingBag className="w-8 h-8" />}
-          title="Your cart is empty"
-          description="You have not added any fast-food items to your cart yet. Explore our freshly prepared pizzas, burgers, and sandwiches to get started."
-          actionLabel="Explore Our Menu"
+          className="mt-8 max-w-lg"
+          title="Nothing here yet"
+          description="Add a few dishes from the menu and they’ll show up here."
+          actionLabel="Browse the menu"
           actionHref="/menu"
         />
       </div>
@@ -39,187 +32,106 @@ export const CartPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-8">
-      {/* Title & Clear Action */}
-      <div className="flex items-center justify-between pb-6 border-b border-bistro-border dark:border-charcoal-700">
+    <div className="container-content pb-24 pt-10 sm:pt-14">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div>
-          <h1 className="text-2xl sm:text-4xl font-serif font-bold text-charcoal dark:text-charcoal-100 tracking-tight">
-            Your Cart
-          </h1>
-          <p className="text-xs sm:text-sm text-charcoal-500 dark:text-charcoal-400 mt-1">
-            Review your order before proceeding to checkout.
+          <h1 className="font-serif text-4xl text-ink">Your cart</h1>
+          <p className="tabular mt-2 text-sm text-muted">
+            {itemCount} {itemCount === 1 ? 'item' : 'items'}
           </p>
         </div>
-        <button
-          onClick={clearCart}
-          className="text-xs font-semibold text-charcoal-500 dark:text-charcoal-400 hover:text-red-600 transition-colors flex items-center gap-1"
-        >
-          <Trash2 className="w-3.5 h-3.5" /> Clear All Items
-        </button>
+        <Button variant="ghost" size="sm" onClick={clearCart}>
+          Clear cart
+        </Button>
       </div>
 
-      {/* Unavailable item warning banner */}
       {hasUnavailableItems && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl p-4 flex items-start gap-3 text-amber-900 dark:text-amber-200 text-xs">
-          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold">One or more items in your cart are currently unavailable</p>
-            <p className="mt-0.5 text-amber-800 dark:text-amber-300">
-              Please remove marked items to proceed to checkout.
-            </p>
-          </div>
-        </div>
+        <Notice tone="warning" icon={<AlertTriangle />} title="Some items are sold out" className="mt-6">
+          Remove them to continue to checkout.
+        </Notice>
       )}
 
-      {/* Cart Grid: Items list (8 cols) + Summary Card (4 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Items List */}
-        <div className="lg:col-span-8 space-y-4">
-          {items.map((item) => {
-            const { id, menuItem, variant, quantity } = item;
-            const unitPrice = item.unitPrice || Number(menuItem.price);
-            const lineTotal = unitPrice * quantity;
+      <div className="mt-8 grid items-start gap-10 lg:grid-cols-[1fr_360px]">
+        <section aria-label="Items in your cart">
+          <ul className="divide-y divide-line border-b border-line">
+            {items.map((item) => {
+              const { id, menuItem, variant, addons, quantity } = item;
+              const unitPrice = item.unitPrice || Number(menuItem.price);
+              const lineTotal = unitPrice * quantity;
 
-            return (
-              <Card key={id} className="p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4">
-                {/* Thumbnail */}
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-charcoal-100 dark:bg-charcoal-800 flex-shrink-0">
-                  <FoodImage
-                    src={menuItem.imageUrl}
-                    alt={menuItem.name}
-                    category={menuItem.category?.name}
-                    className="w-full h-full object-cover"
-                  />
-                  {!menuItem.isAvailable && (
-                    <div className="absolute inset-0 bg-charcoal-900/70 flex items-center justify-center p-1 text-center">
-                      <span className="text-[10px] font-bold text-white bg-red-600 px-1 py-0.5 rounded">
-                        Sold Out
-                      </span>
+              return (
+                <li key={id} className="flex gap-4 py-5 first:pt-0">
+                  <Link to={`/menu/${menuItem.id}`} className="h-20 w-20 shrink-0 overflow-hidden rounded sm:h-24 sm:w-24" tabIndex={-1} aria-hidden="true">
+                    <FoodImage src={menuItem.imageUrl} alt="" category={menuItem.category?.name} width={192} height={192} />
+                  </Link>
+                  <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h2 className="font-sans text-base font-medium text-ink">
+                        <Link to={`/menu/${menuItem.id}`} className="hover:underline">
+                          {menuItem.name}
+                        </Link>
+                      </h2>
+                      <p className="mt-0.5 text-sm text-muted">
+                        {[variant?.name, ...(addons || []).map((a) => `+ ${a.name}`)].filter(Boolean).join(' · ') || 'Regular'}
+                      </p>
+                      <p className="tabular mt-1 text-sm text-muted">{formatCurrency(unitPrice)} each</p>
+                      {!menuItem.isAvailable && <p className="mt-1 text-sm text-warning">Sold out. Remove to continue.</p>}
                     </div>
-                  )}
-                </div>
-
-                {/* Details */}
-                <div className="flex-1 text-center sm:text-left min-w-0">
-                  <h3 className="font-serif font-bold text-base text-charcoal dark:text-charcoal-100 truncate">
-                    {menuItem.name}
-                    {variant && (
-                      <span className="text-xs font-sans font-medium text-terracotta ml-2 px-2 py-0.5 bg-terracotta/10 rounded">
-                        {variant.name}
-                      </span>
-                    )}
-                  </h3>
-                  <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-0.5 font-medium">
-                    {formatCurrency(unitPrice)} each
-                  </p>
-                  {!menuItem.isAvailable && (
-                    <p className="text-xs text-red-600 dark:text-red-400 font-semibold mt-1">
-                      Item is sold out. Please remove to continue.
-                    </p>
-                  )}
-                </div>
-
-                {/* Quantity Controls & Line Total */}
-                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                  {/* Quantity Stepper */}
-                  <div className="flex items-center border border-bistro-border dark:border-charcoal-700 rounded-md bg-bistro-bg dark:bg-charcoal-800 p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(id, quantity - 1)}
-                      className="p-1 text-charcoal-600 dark:text-charcoal-300 hover:text-charcoal-900 dark:hover:text-charcoal-100 rounded transition-colors"
-                      title="Decrease quantity"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="px-3 font-semibold text-xs text-charcoal dark:text-charcoal-100">{quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(id, quantity + 1)}
-                      className="p-1 text-charcoal-600 dark:text-charcoal-300 hover:text-charcoal-900 dark:hover:text-charcoal-100 rounded transition-colors"
-                      title="Increase quantity"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
+                      <QuantityStepper
+                        size="sm"
+                        value={quantity}
+                        removeAtOne
+                        label={`Quantity for ${menuItem.name}`}
+                        onDecrease={() => updateQuantity(id, quantity - 1)}
+                        onIncrease={() => updateQuantity(id, quantity + 1)}
+                      />
+                      <div className="flex items-center gap-1 sm:flex-col sm:items-end sm:gap-0">
+                        <p className="tabular text-base text-ink">{formatCurrency(lineTotal)}</p>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(id)}
+                          className="inline-flex min-h-11 items-center px-2 text-sm text-muted underline-offset-4 hover:text-danger hover:underline sm:min-h-9 sm:px-0"
+                        >
+                          Remove<span className="sr-only"> {menuItem.name}</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
+                </li>
+              );
+            })}
+          </ul>
+          <Link to="/menu" className="mt-4 inline-flex min-h-11 items-center text-sm text-muted hover:text-ink">
+            Add more dishes
+          </Link>
+        </section>
 
-                  {/* Line Total */}
-                  <div className="text-right min-w-[80px]">
-                    <span className="font-bold text-charcoal dark:text-charcoal-100 text-sm">
-                      {formatCurrency(lineTotal)}
-                    </span>
-                  </div>
-
-                  {/* Remove Button */}
-                  <button
-                    onClick={() => removeItem(id)}
-                    className="text-charcoal-400 dark:text-charcoal-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1"
-                    title="Remove item"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </Card>
-            );
-          })}
-
-          <div className="pt-2">
-            <Link
-              to="/menu"
-              className="inline-flex items-center text-xs font-semibold text-terracotta hover:underline"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Add more items from menu
-            </Link>
-          </div>
-        </div>
-
-        {/* Order Summary Sidebar Card */}
-        <div className="lg:col-span-4">
-          <Card className="p-6 space-y-6">
-            <h3 className="font-serif font-bold text-lg text-charcoal dark:text-charcoal-100 pb-3 border-b border-bistro-border dark:border-charcoal-700">
-              Order Summary
-            </h3>
-
-            <div className="space-y-3 text-xs">
-              <div className="flex justify-between text-charcoal-600 dark:text-charcoal-300">
-                <span>Items Subtotal</span>
-                <span className="font-semibold text-charcoal-900 dark:text-charcoal-100">{formatCurrency(subtotal)}</span>
+        <aside aria-labelledby="summary-title" className="rounded-lg border border-line bg-surface p-6 lg:sticky lg:top-24">
+          <h2 id="summary-title" className="font-serif text-xl text-ink">
+            Summary
+          </h2>
+          <dl className="mt-5 space-y-3 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-muted">Subtotal</dt>
+              <dd className="tabular text-ink">{formatCurrency(subtotal)}</dd>
+            </div>
+            {settings.deliveryEnabled && (
+              <div className="flex justify-between">
+                <dt className="text-muted">Delivery fee</dt>
+                <dd className="tabular text-ink">{formatCurrency(deliveryFee)}</dd>
               </div>
-              {settings.deliveryEnabled && (
-                <div className="flex justify-between text-charcoal-600 dark:text-charcoal-300">
-                  <span>Delivery Fee</span>
-                  <span className="font-semibold text-charcoal-900 dark:text-charcoal-100">{formatCurrency(deliveryFee)}</span>
-                </div>
-              )}
-              <div className="pt-3 border-t border-bistro-border dark:border-charcoal-700 flex justify-between items-baseline">
-                <span className="text-sm font-bold text-charcoal dark:text-charcoal-200">Subtotal (PKR)</span>
-                <span className="text-xl font-serif font-bold text-terracotta">
-                  {formatCurrency(subtotal)}
-                </span>
-              </div>
+            )}
+            <div className="flex items-baseline justify-between border-t border-line pt-4">
+              <dt className="text-base text-ink">Total</dt>
+              <dd className="tabular font-serif text-2xl text-ink">{formatCurrency(subtotal)}</dd>
             </div>
-
-            <div className="pt-2">
-              <Link to="/checkout">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  disabled={hasUnavailableItems}
-                  rightIcon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Proceed to Checkout
-                </Button>
-              </Link>
-            </div>
-
-            <div className="bg-bistro-bg dark:bg-charcoal-800 p-3.5 rounded-lg border border-bistro-border dark:border-charcoal-700 text-[11px] text-charcoal-600 dark:text-charcoal-400 space-y-1">
-              <p className="flex items-center gap-1.5 font-semibold text-charcoal-800 dark:text-charcoal-200">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-500" /> Server-Verified Prices
-              </p>
-              <p>Prices and variants are re-verified by the restaurant API at checkout.</p>
-            </div>
-          </Card>
-        </div>
+          </dl>
+          <p className="mt-2 text-sm text-muted">Pay at the restaurant. Prices are confirmed when you place the order.</p>
+          <ButtonLink to="/checkout" size="lg" className="mt-6 w-full" disabled={hasUnavailableItems}>
+            Go to checkout
+          </ButtonLink>
+        </aside>
       </div>
     </div>
   );

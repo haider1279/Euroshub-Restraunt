@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '../../api/client';
 import { Order } from '../../types';
-import { formatCurrency } from '../../utils/currency';
-import { formatLongDateTime } from '../../utils/date';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
-import { Button } from '../../components/ui/Button';
-import { Skeleton } from '../../components/ui/Skeleton';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { ShoppingBag, ArrowRight, ChevronLeft, ChevronRight, Calendar, AlertCircle } from 'lucide-react';
+import { Skeleton, LoadingStatus } from '../../components/ui/Skeleton';
+import { EmptyState, ErrorState } from '../../components/ui/EmptyState';
+import { Pager } from '../../components/ui/DataTable';
+import { OrderRow } from '../../components/account/OrderRow';
 
 export const OrderHistoryPage: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -24,109 +19,33 @@ export const OrderHistoryPage: React.FC = () => {
   const pagination = data?.pagination;
 
   return (
-    <div className="space-y-6">
-      <div className="pb-4 border-b border-bistro-border dark:border-charcoal-700">
-        <h2 className="text-xl font-serif font-bold text-charcoal dark:text-charcoal-100">Order History</h2>
-        <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-0.5">
-          View all your previous dine-in, takeaway, and delivery meals.
-        </p>
+    <div>
+      <h2 className="font-serif text-2xl text-ink">Orders</h2>
+      <p className="mt-1 text-sm text-muted">Every dine-in and takeaway order you’ve placed.</p>
+
+      <div className="mt-6">
+        {isLoading ? (
+          <div className="space-y-3">
+            <LoadingStatus label="Loading orders" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : isError ? (
+          <ErrorState title="Couldn’t load your orders" onRetry={() => refetch()} />
+        ) : orders.length === 0 ? (
+          <EmptyState title="No orders yet" description="Your orders will appear here once you place one." actionLabel="Browse the menu" actionHref="/menu" />
+        ) : (
+          <>
+            <ul className="space-y-3">
+              {orders.map((order) => (
+                <OrderRow key={order.id} order={order} />
+              ))}
+            </ul>
+            {pagination && <Pager className="mt-6" page={pagination.page} pages={pagination.totalPages} onChange={setPage} />}
+          </>
+        )}
       </div>
-
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-xl" />
-          ))}
-        </div>
-      ) : isError ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center max-w-sm mx-auto">
-          <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-          <p className="text-xs text-red-700 mb-4 font-medium">Failed to load order history.</p>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            Retry
-          </Button>
-        </div>
-      ) : orders.length === 0 ? (
-        <EmptyState
-          icon={<ShoppingBag className="w-7 h-7" />}
-          title="No previous orders"
-          description="You haven't placed any orders yet. Discover our artisanal menu to place your first order."
-          actionLabel="Explore Menu"
-          actionHref="/menu"
-        />
-      ) : (
-        <div className="space-y-3">
-          {orders.map((order) => (
-            <Card
-              key={order.id}
-              className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-terracotta transition-bistro"
-            >
-              <div>
-                <div className="flex items-center gap-3 mb-1.5">
-                  <span className="font-mono font-bold text-sm text-charcoal dark:text-charcoal-100">
-                    {order.orderNumber}
-                  </span>
-                  <Badge variant={order.status.toLowerCase() as any} dot>
-                    {order.status}
-                  </Badge>
-                </div>
-                <p className="text-xs text-charcoal-500 dark:text-charcoal-400">
-                  {formatLongDateTime(order.createdAt)}
-                </p>
-                <div className="text-xs text-charcoal-600 dark:text-charcoal-400 mt-2">
-                  <span className="font-medium capitalize">{order.type.replace('_', ' ')}</span>
-                  <span className="text-charcoal-300 dark:text-charcoal-600 mx-2">•</span>
-                  <span>{order.items.length} {order.items.length === 1 ? 'item' : 'items'}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between sm:justify-end gap-5 pt-3 sm:pt-0 border-t sm:border-t-0 border-bistro-border dark:border-charcoal-700">
-                <div className="text-right">
-                  <span className="text-[10px] text-charcoal-400 dark:text-charcoal-500 uppercase tracking-wider block">Total</span>
-                  <span className="font-serif font-bold text-lg text-terracotta">
-                    {formatCurrency(order.total)}
-                  </span>
-                </div>
-
-                <Link to={`/account/orders/${order.id}`}>
-                  <Button variant="primary" size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                    Track
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          ))}
-
-          {/* Pagination Controls */}
-          {pagination && pagination.totalPages > 1 && (
-            <div className="flex justify-between items-center pt-4 border-t border-bistro-border dark:border-charcoal-700 text-xs text-charcoal-600 dark:text-charcoal-400">
-              <span>
-                Page {pagination.page} of {pagination.totalPages}
-              </span>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pagination.page <= 1}
-                  onClick={() => setPage(page - 1)}
-                  leftIcon={<ChevronLeft className="w-3.5 h-3.5" />}
-                >
-                  Prev
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pagination.page >= pagination.totalPages}
-                  onClick={() => setPage(page + 1)}
-                  rightIcon={<ChevronRight className="w-3.5 h-3.5" />}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

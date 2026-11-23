@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { AlertCircle, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useRestaurant } from '../../context/RestaurantContext';
@@ -10,19 +11,13 @@ import { apiRequest, api } from '../../api/client';
 import { Order, OrderType, RestaurantTable } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { checkRestaurantStatus } from '../../utils/hours';
+import { closedStatusLine } from '../../utils/openingHours';
+import { toast } from 'sonner';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Card } from '../../components/ui/Card';
-import { toast } from 'sonner';
-import {
-  Utensils,
-  ShoppingBag,
-  ArrowRight,
-  ShieldCheck,
-  AlertCircle,
-  Clock,
-  CheckCircle2,
-} from 'lucide-react';
+import { Select } from '../../components/ui/Select';
+import { SegmentedControl } from '../../components/ui/Tabs';
+import { EmptyState, Notice } from '../../components/ui/EmptyState';
 
 const checkoutFormSchema = z.object({
   contactPhone: z.string().min(6, 'Please provide a valid contact phone number (e.g. 0300 1234567)'),
@@ -94,14 +89,15 @@ export const CheckoutPage: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <h2 className="text-xl font-serif font-bold text-charcoal mb-2">Your Cart is Empty</h2>
-        <p className="text-xs text-charcoal-500 mb-6">
-          Please add items to your cart before proceeding to checkout.
-        </p>
-        <Link to="/menu">
-          <Button variant="primary">Browse Menu</Button>
-        </Link>
+      <div className="container-content py-16 sm:py-24">
+        <h1 className="font-serif text-4xl text-ink">Checkout</h1>
+        <EmptyState
+          className="mt-8 max-w-lg"
+          title="Your cart is empty"
+          description="Add dishes from the menu before checking out."
+          actionLabel="Browse the menu"
+          actionHref="/menu"
+        />
       </div>
     );
   }
@@ -150,241 +146,148 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
+  const closedLine = closedStatusLine(restaurantStatus);
+
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-8">
-      {/* Checkout Header */}
-      <div className="border-b border-bistro-border pb-6">
-        <h1 className="text-2xl sm:text-4xl font-serif font-bold text-charcoal tracking-tight">
-          Checkout
-        </h1>
-        <p className="text-xs sm:text-sm text-charcoal-500 mt-1">
-          Complete your order details. Dine-in and Takeaway available daily at Kohistan Tower, Saddar.
-        </p>
+    <div className="container-content pb-24 pt-10 sm:pt-14">
+      <div className="border-b border-line pb-6">
+        <h1 className="font-serif text-4xl text-ink">Checkout</h1>
+        <p className="mt-2 text-sm text-muted">Dine-in or takeaway. You pay at the restaurant.</p>
       </div>
 
-      {!restaurantStatus.isOpen && (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3 text-amber-900 dark:text-amber-200 text-xs">
-          <Clock className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <div>
-            <p className="font-bold">{restaurantStatus.formattedMessage}</p>
-            <p className="mt-0.5 text-charcoal-600 dark:text-charcoal-400">
-              Orders cannot be placed while the restaurant is closed. Please check back during opening hours.
-            </p>
-          </div>
-        </div>
-      )}
+      <div className="mt-6 space-y-3">
+        {!restaurantStatus.isOpen && (
+          <Notice tone="warning" icon={<Clock />} title={closedLine || 'Closed now'}>
+            Orders can be placed during opening hours.
+          </Notice>
+        )}
+        {apiError && (
+          <Notice tone="danger" icon={<AlertCircle />} title="Your order wasn’t placed">
+            {apiError}
+          </Notice>
+        )}
+        {!isAuthenticated && (
+          <Notice tone="neutral">
+            You’ll be asked to{' '}
+            <Link to="/login" state={{ from: { pathname: '/checkout' } }} className="inline-flex min-h-11 items-center text-ink underline underline-offset-4">
+              sign in
+            </Link>{' '}
+            before the order is placed.
+          </Notice>
+        )}
+      </div>
 
-      {apiError && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-800 text-xs">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold">Order Placement Error</p>
-            <p className="mt-0.5">{apiError}</p>
-          </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Main Form (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Step 1: Order Type Selector (Dine-In or Takeaway ONLY) */}
-            <Card className="p-6 space-y-4">
-              <h2 className="font-serif font-bold text-base text-charcoal flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-terracotta text-white flex items-center justify-center text-xs font-sans font-bold">
-                  1
-                </span>
-                Select Order Type
-              </h2>
-
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOrderType('DINE_IN')}
-                  className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center gap-2 ${
-                    orderType === 'DINE_IN'
-                      ? 'border-terracotta bg-terracotta-50/60 text-terracotta font-semibold shadow-sm'
-                      : 'border-bistro-border hover:bg-bistro-bg text-charcoal-700'
-                  }`}
-                >
-                  <Utensils className="w-5 h-5" />
-                  <span className="text-sm">Dine-In</span>
-                  <span className="text-[11px] text-charcoal-400 font-normal">Eat at restaurant table</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setOrderType('TAKEAWAY')}
-                  className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center gap-2 ${
-                    orderType === 'TAKEAWAY'
-                      ? 'border-terracotta bg-terracotta-50/60 text-terracotta font-semibold shadow-sm'
-                      : 'border-bistro-border hover:bg-bistro-bg text-charcoal-700'
-                  }`}
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  <span className="text-sm">Takeaway</span>
-                  <span className="text-[11px] text-charcoal-400 font-normal">Pick up at counter</span>
-                </button>
-              </div>
-
-              {/* Dine-in Table Selection (01–100) */}
-              {orderType === 'DINE_IN' && (
-                <div className="pt-3 border-t border-bistro-border space-y-2">
-                  <label className="block text-xs font-semibold text-charcoal">
-                    Select Your Table Number (01–100)
-                  </label>
-                  {loadingTables ? (
-                    <p className="text-xs text-charcoal-400">Loading active tables...</p>
-                  ) : (
-                    <select
-                      value={selectedTable}
-                      onChange={(e) => setSelectedTable(e.target.value)}
-                      className="w-full h-10 px-3 text-xs bg-white border border-bistro-border rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta"
-                    >
-                      {tables.map((t) => (
-                        <option key={t.id || t.tableNumber} value={t.tableNumber}>
-                          Table {t.tableNumber} {t.capacity ? `(${t.capacity} seats)` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <p className="text-[11px] text-charcoal-400 italic">
-                    Choose the table where you are seated at Kohistan Tower.
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 grid items-start gap-10 lg:grid-cols-[1fr_380px]">
+        <div className="space-y-10">
+          <section aria-labelledby="type-title">
+            <h2 id="type-title" className="font-serif text-xl text-ink">
+              How are you eating?
+            </h2>
+            <SegmentedControl<OrderType>
+              className="mt-4"
+              label="Order type"
+              value={orderType}
+              onChange={setOrderType}
+              options={[
+                { value: 'DINE_IN', label: 'Dine-in', hint: 'At a table' },
+                { value: 'TAKEAWAY', label: 'Takeaway', hint: 'Pick up at the counter' },
+              ]}
+            />
+            {orderType === 'DINE_IN' && (
+              <div className="mt-5 max-w-xs">
+                {loadingTables ? (
+                  <p className="text-sm text-muted" role="status">
+                    Loading tables…
                   </p>
-                </div>
-              )}
-            </Card>
-
-            {/* Step 2: Contact Details */}
-            <Card className="p-6 space-y-4">
-              <h2 className="font-serif font-bold text-base text-charcoal flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-terracotta text-white flex items-center justify-center text-xs font-sans font-bold">
-                  2
-                </span>
-                Contact Information
-              </h2>
-
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="block text-xs font-semibold text-charcoal mb-1">
-                    Contact Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="tel"
-                    placeholder="0300 1234567"
-                    {...register('contactPhone')}
-                    error={errors.contactPhone?.message}
+                ) : (
+                  <Select
+                    label="Your table"
+                    helperText="The number on your table."
+                    value={selectedTable}
+                    onChange={(e) => setSelectedTable(e.target.value)}
+                    options={tables.map((t) => ({
+                      value: t.tableNumber,
+                      label: `Table ${t.tableNumber}${t.capacity ? ` · ${t.capacity} seats` : ''}`,
+                    }))}
                   />
-                  <p className="text-[11px] text-charcoal-400 mt-1">
-                    We will use this phone number to update you about your order status.
-                  </p>
-                </div>
+                )}
               </div>
-            </Card>
+            )}
+          </section>
 
-            {/* Step 3: Payment Method (Fixed to Pay at Restaurant) */}
-            <Card className="p-6 space-y-3">
-              <h2 className="font-serif font-bold text-base text-charcoal flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-terracotta text-white flex items-center justify-center text-xs font-sans font-bold">
-                  3
-                </span>
-                Payment Method
-              </h2>
+          <section aria-labelledby="contact-title" className="border-t border-line pt-10">
+            <h2 id="contact-title" className="font-serif text-xl text-ink">
+              Contact
+            </h2>
+            <div className="mt-4 max-w-sm">
+              <Input
+                type="tel"
+                label="Phone number"
+                autoComplete="tel"
+                placeholder="0300 1234567"
+                helperText="Only used for updates about this order."
+                required
+                {...register('contactPhone')}
+                error={errors.contactPhone?.message}
+              />
+            </div>
+          </section>
 
-              <div className="p-4 rounded-xl border border-emerald-500 bg-emerald-50/50 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-charcoal">Pay at Restaurant</p>
-                    <p className="text-[11px] text-charcoal-500">
-                      Pay with Cash or Card at our counter upon dining or pickup.
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                  Active
-                </span>
-              </div>
-            </Card>
-          </div>
-
-          {/* Sidebar Summary (5 cols) */}
-          <div className="lg:col-span-5 space-y-6">
-            <Card className="p-6 space-y-4">
-              <h3 className="font-serif font-bold text-base text-charcoal pb-3 border-b border-bistro-border">
-                Your Order Items ({items.length})
-              </h3>
-
-              {/* Items List */}
-              <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                {items.map((i) => {
-                  const linePrice = (i.unitPrice || Number(i.menuItem.price)) * i.quantity;
-                  return (
-                    <div key={i.id} className="flex justify-between items-start text-xs gap-2">
-                      <div>
-                        <p className="font-bold text-charcoal">
-                          {i.quantity}x {i.menuItem.name}
-                        </p>
-                        {i.variant && (
-                          <p className="text-[11px] text-terracotta font-medium">
-                            Variant: {i.variant.name}
-                          </p>
-                        )}
-                      </div>
-                      <span className="font-semibold text-charcoal-800">
-                        {formatCurrency(linePrice)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Totals */}
-              <div className="pt-3 border-t border-bistro-border space-y-2 text-xs">
-                <div className="flex justify-between text-charcoal-600">
-                  <span>Subtotal</span>
-                  <span className="font-semibold text-charcoal-900">{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-charcoal-600">
-                  <span>Order Type</span>
-                  <span className="font-semibold text-charcoal-900">
-                    {orderType === 'DINE_IN' ? `Dine-In (Table ${selectedTable})` : 'Takeaway (Counter)'}
-                  </span>
-                </div>
-                <div className="pt-2 border-t border-bistro-border flex justify-between items-baseline">
-                  <span className="text-sm font-bold text-charcoal">Total Amount (PKR)</span>
-                  <span className="text-xl font-serif font-bold text-terracotta">
-                    {formatCurrency(subtotal)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Submit CTA */}
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full"
-                isLoading={isSubmitting}
-                disabled={!restaurantStatus.isOpen || isSubmitting}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                {!restaurantStatus.isOpen ? restaurantStatus.formattedMessage : `Place Order (${formatCurrency(subtotal)})`}
-              </Button>
-
-              <div className="bg-bistro-bg p-3 rounded-lg border border-bistro-border text-[11px] text-charcoal-600 space-y-1">
-                <p className="flex items-center gap-1.5 font-semibold text-charcoal-800">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Authorized Fast-Food Kitchen
-                </p>
-                <p>
-                  Euroshub Kitchen — Kohistan Tower, Saddar, Rawalpindi. Daily 9:00 AM – 12:00 AM (Midnight).
-                </p>
-              </div>
-            </Card>
-          </div>
+          <section aria-labelledby="payment-title" className="border-t border-line pt-10">
+            <h2 id="payment-title" className="font-serif text-xl text-ink">
+              Payment
+            </h2>
+            <div className="mt-4 rounded border border-line bg-surface p-4">
+              <p className="text-sm font-medium text-ink">Pay at the restaurant</p>
+              <p className="mt-1 text-sm text-muted">Cash or card at the counter when you eat or pick up. Nothing is charged online.</p>
+            </div>
+          </section>
         </div>
+
+        <aside aria-labelledby="checkout-summary" className="rounded-lg border border-line bg-surface p-6 lg:sticky lg:top-24">
+          <h2 id="checkout-summary" className="font-serif text-xl text-ink">
+            Your order
+          </h2>
+          <ul className="mt-5 max-h-80 space-y-4 overflow-y-auto pr-1">
+            {items.map((i) => {
+              const linePrice = (i.unitPrice || Number(i.menuItem.price)) * i.quantity;
+              const details = [i.variant?.name, ...(i.addons || []).map((a) => `+ ${a.name}`)].filter(Boolean).join(' · ');
+              return (
+                <li key={i.id} className="flex justify-between gap-3 text-sm">
+                  <div className="min-w-0">
+                    <p className="text-ink">
+                      <span className="tabular text-muted">{i.quantity}×</span> {i.menuItem.name}
+                    </p>
+                    {details && <p className="mt-0.5 text-muted">{details}</p>}
+                  </div>
+                  <span className="tabular shrink-0 text-ink">{formatCurrency(linePrice)}</span>
+                </li>
+              );
+            })}
+          </ul>
+
+          <dl className="mt-6 space-y-3 border-t border-line pt-5 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-muted">Subtotal</dt>
+              <dd className="tabular text-ink">{formatCurrency(subtotal)}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Order type</dt>
+              <dd className="text-right text-ink">{orderType === 'DINE_IN' ? `Dine-in · Table ${selectedTable}` : 'Takeaway'}</dd>
+            </div>
+            <div className="flex items-baseline justify-between border-t border-line pt-4">
+              <dt className="text-base text-ink">Total</dt>
+              <dd className="tabular font-serif text-2xl text-ink">{formatCurrency(subtotal)}</dd>
+            </div>
+          </dl>
+          <p className="mt-2 text-sm text-muted">Pay at the restaurant</p>
+
+          <Button type="submit" size="lg" className="mt-6 w-full" isLoading={isSubmitting} disabled={!restaurantStatus.isOpen || isSubmitting}>
+            <span className="tabular">
+              {!restaurantStatus.isOpen ? closedLine || 'Closed now' : `Place order · ${formatCurrency(subtotal)}`}
+            </span>
+          </Button>
+        </aside>
       </form>
     </div>
   );

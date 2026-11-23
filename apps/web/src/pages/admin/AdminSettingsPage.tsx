@@ -4,15 +4,27 @@ import { apiRequest } from '../../api/client';
 import { RestaurantSettings, SocialLink, MenuItem } from '../../types';
 import { formatCurrency } from '../../utils/currency';
 import { broadcastSync } from '../../utils/sync';
+import { cn } from '../../utils/cn';
 import { Button } from '../../components/ui/Button';
 import { resolveImageUrl } from '../../components/ui/FoodImage';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { controlClasses } from '../../components/ui/Field';
+import { RowAction } from '../../components/ui/DataTable';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Save, Clock, UtensilsCrossed, Share2, Sparkles, Armchair } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { ChangePasswordCard } from '../../components/auth/ChangePasswordCard';
+
+const Section: React.FC<{ title: string; description?: string; children: React.ReactNode }> = ({ title, description, children }) => (
+  <section className="rounded-lg border border-line bg-surface p-5 sm:p-6">
+    <h2 className="font-sans text-base font-medium text-ink">{title}</h2>
+    {description && <p className="mt-1 text-sm text-muted">{description}</p>}
+    <div className="mt-5 space-y-5">{children}</div>
+  </section>
+);
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -169,144 +181,88 @@ export default function AdminSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-3xl">
+      <div className="max-w-3xl space-y-6">
         <Skeleton className="h-10 w-48" />
         {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+          <Skeleton key={i} className="h-32 w-full rounded-lg" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-charcoal">Restaurant & Content Settings</h1>
-        <p className="text-stone-500 mt-1">
-          Configure live restaurant identity, address, hours, signature food, and branding without code changes.
-        </p>
+        <h1 className="font-serif text-2xl text-ink">Settings</h1>
+        <p className="mt-1 text-sm text-muted">Changes go live on the website as soon as you save.</p>
       </div>
 
       <form onSubmit={handleSubmit((d) => save.mutate(d))} id="settings-form" className="space-y-6">
-        {/* Basic Info */}
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-4">
-          <h2 className="font-semibold text-charcoal flex items-center gap-2">
-            <UtensilsCrossed className="w-4 h-4 text-terracotta" /> Identity & Contact
-          </h2>
-          <Input label="Restaurant Name" id="settings-name" {...register('name', { required: true })} />
-          <Input
-            label="Homepage Hero Headline"
-            id="settings-headline"
-            {...register('headline')}
-            placeholder="Fresh, Hot & Fast in Rawalpindi"
-          />
-          <Input
-            label="Homepage Hero Subtitle"
-            id="settings-subtitle"
-            {...register('subtitle')}
-            placeholder="Crispy burgers, loaded pizzas, and artisanal sandwiches..."
-          />
+        <Section title="Restaurant details">
+          <Input label="Restaurant name" id="settings-name" {...register('name', { required: true })} />
           <Textarea
             label="Description"
             id="settings-description"
             rows={3}
+            helperText="Shown on the About page."
             {...register('description', { required: true })}
           />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Phone Number" id="settings-phone" {...register('phone', { required: true })} />
-            <Input
-              label="Email Address"
-              id="settings-email"
-              type="email"
-              {...register('email', { required: true })}
-            />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Input label="Phone" id="settings-phone" type="tel" {...register('phone', { required: true })} />
+            <Input label="Email" id="settings-email" type="email" {...register('email', { required: true })} />
           </div>
           <Input label="Address" id="settings-address" {...register('address', { required: true })} />
           <Input
-            label="Logo URL (Optional / Admin-replaceable)"
+            label="Logo URL"
             id="settings-logo-url"
+            helperText="Optional. Leave blank to show the restaurant name only."
+            placeholder="https://"
             {...register('logoUrl')}
-            placeholder="https://... or leave blank for horse logo"
           />
-          <Input
-            label="Footer Copyright / Text"
-            id="settings-footer-text"
-            {...register('footerText')}
-            placeholder="© Euroshub Kitchen. Fresh Pakistani Fast-Food. Kohistan Tower, Saddar, Rawalpindi."
+          <Input label="Footer text" id="settings-footer-text" {...register('footerText')} />
+        </Section>
+
+        <Section title="Signature dish" description="Featured in its own block on the homepage. Leave empty to hide the block.">
+          <Select
+            label="Dish"
+            id="settings-signature-item"
+            placeholder="None"
+            options={availableItems.map((item) => ({
+              value: item.id,
+              label: `${item.name} · ${item.category?.name || 'Item'} · ${formatCurrency(item.price)}`,
+            }))}
+            {...register('signatureMenuItemId')}
           />
-        </div>
-
-        {/* Homepage Signature Item Configuration */}
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-charcoal flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-terracotta" /> Homepage Signature Item
-            </h2>
-            <span className="text-xs bg-terracotta-50 text-terracotta px-2.5 py-1 rounded-full font-semibold">
-              Live on Hero Card
-            </span>
-          </div>
-          <p className="text-xs text-stone-500">
-            Select the hero signature dish displayed prominently on the customer homepage. Customers clicking this dish or its order button will open its detail view with sizes and pricing.
-          </p>
-
-          <div className="space-y-3">
-            <div>
-              <label htmlFor="settings-signature-item" className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                Select Signature Dish
-              </label>
-              <select
-                id="settings-signature-item"
-                {...register('signatureMenuItemId')}
-                className="block w-full rounded-xl border border-stone-200 bg-white text-sm px-3.5 py-2.5 text-charcoal focus:border-terracotta focus:ring-terracotta focus:outline-none"
-              >
-                <option value="">-- Choose a dish --</option>
-                {availableItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name} ({item.category?.name || 'Item'} — Base {formatCurrency(item.price)})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {selectedSignatureItem && (
-              <div className="flex items-center gap-4 p-3.5 bg-stone-50 rounded-xl border border-stone-200">
-                {selectedSignatureItem.imageUrl ? (
-                  <img
-                    src={resolveImageUrl(selectedSignatureItem.imageUrl)}
-                    alt={selectedSignatureItem.name}
-                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg bg-stone-200 flex items-center justify-center text-xs text-stone-500 flex-shrink-0">
-                    No Image
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm text-charcoal truncate">{selectedSignatureItem.name}</h4>
-                  <p className="text-xs text-stone-500 line-clamp-1">{selectedSignatureItem.description}</p>
-                  <p className="text-xs text-terracotta font-bold mt-0.5">
-                    {selectedSignatureItem.variants && selectedSignatureItem.variants.length > 1
-                      ? `From ${formatCurrency(selectedSignatureItem.variants[0].price)} (${selectedSignatureItem.variants.length} size variants)`
-                      : formatCurrency(selectedSignatureItem.price)}
-                  </p>
-                </div>
+          {selectedSignatureItem && (
+            <div className="flex items-center gap-4 rounded border border-line bg-deep p-3">
+              {selectedSignatureItem.imageUrl ? (
+                <img
+                  src={resolveImageUrl(selectedSignatureItem.imageUrl)}
+                  alt=""
+                  width={64}
+                  height={64}
+                  className="h-16 w-16 shrink-0 rounded object-cover"
+                />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded bg-ink/[0.06] text-xs text-muted">No image</div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-ink">{selectedSignatureItem.name}</p>
+                <p className="line-clamp-1 text-sm text-muted">{selectedSignatureItem.description}</p>
+                <p className="tabular mt-0.5 text-sm text-ink">
+                  {selectedSignatureItem.variants && selectedSignatureItem.variants.length > 1
+                    ? `From ${formatCurrency(selectedSignatureItem.variants[0].price)} · ${selectedSignatureItem.variants.length} sizes`
+                    : formatCurrency(selectedSignatureItem.price)}
+                </p>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </Section>
 
-        {/* Seated Table Capacity */}
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-4">
-          <h2 className="font-semibold text-charcoal flex items-center gap-2">
-            <Armchair className="w-4 h-4 text-terracotta" /> Seating & Table Capacity
-          </h2>
-          <p className="text-xs text-stone-500">
-            Total operational dining tables configured for the restaurant. Used to synchronize real-time seating availability calculations across the customer website.
-          </p>
-          <div className="max-w-xs">
+        <Section title="Seating" description="Total dine-in tables. Used for live availability on the website.">
+          <div className="max-w-[200px]">
             <Input
-              label="Configured Dine-In Table Count"
+              label="Tables"
               id="settings-table-count"
               type="number"
               min={1}
@@ -314,37 +270,37 @@ export default function AdminSettingsPage() {
               {...register('tableCount', { valueAsNumber: true, min: 1 })}
             />
           </div>
-        </div>
+        </Section>
 
-        {/* Opening Hours */}
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-4">
-          <h2 className="font-semibold text-charcoal flex items-center gap-2">
-            <Clock className="w-4 h-4 text-terracotta" /> Kitchen Operational Hours
-          </h2>
-          <div className="space-y-3">
+        <Section title="Opening hours" description="A closing time of 12:00 AM or earlier than opening runs past midnight.">
+          <ul className="divide-y divide-line rounded border border-line">
             {DAYS.map((day) => {
               const dayData = openingHours[day] || { open: '09:00', close: '00:00', closed: false };
               return (
-                <div key={day} className="flex items-center gap-3">
-                  <span className="w-24 text-sm font-medium text-charcoal capitalize">{day}</span>
-                  <input
-                    type="checkbox"
-                    id={`closed-${day}`}
-                    checked={!dayData.closed}
-                    onChange={(e) =>
-                      setValue(
-                        `openingHours.${day}`,
-                        { ...dayData, closed: !e.target.checked },
-                        { shouldDirty: true }
-                      )
-                    }
-                    className="w-4 h-4 rounded accent-terracotta"
-                  />
-                  <span className="text-xs text-stone-400">{dayData.closed ? 'Closed' : 'Open'}</span>
-                  {!dayData.closed && (
-                    <>
+                <li key={day} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5 sm:px-4">
+                  <label htmlFor={`closed-${day}`} className="flex min-h-11 w-36 cursor-pointer items-center gap-3 text-sm capitalize text-ink">
+                    <input
+                      type="checkbox"
+                      id={`closed-${day}`}
+                      checked={!dayData.closed}
+                      onChange={(e) =>
+                        setValue(
+                          `openingHours.${day}`,
+                          { ...dayData, closed: !e.target.checked },
+                          { shouldDirty: true }
+                        )
+                      }
+                      className="h-5 w-5 cursor-pointer accent-accent"
+                    />
+                    {day}
+                  </label>
+                  {dayData.closed ? (
+                    <span className="text-sm text-muted">Closed</span>
+                  ) : (
+                    <div className="flex items-center gap-2">
                       <input
                         type="time"
+                        aria-label={`${day} opens`}
                         value={dayData.open}
                         onChange={(e) =>
                           setValue(
@@ -353,12 +309,15 @@ export default function AdminSettingsPage() {
                             { shouldDirty: true }
                           )
                         }
-                        className="text-sm border border-stone-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-terracotta/30"
+                        className={cn(controlClasses(), 'w-[132px]')}
                         id={`open-${day}`}
                       />
-                      <span className="text-stone-400 text-sm">–</span>
+                      <span className="text-sm text-muted" aria-hidden="true">
+                        to
+                      </span>
                       <input
                         type="time"
+                        aria-label={`${day} closes`}
                         value={dayData.close}
                         onChange={(e) =>
                           setValue(
@@ -367,72 +326,63 @@ export default function AdminSettingsPage() {
                             { shouldDirty: true }
                           )
                         }
-                        className="text-sm border border-stone-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-terracotta/30"
+                        className={cn(controlClasses(), 'w-[132px]')}
                         id={`close-${day}`}
                       />
-                    </>
+                    </div>
                   )}
-                </div>
+                </li>
               );
             })}
-          </div>
-        </div>
+          </ul>
+        </Section>
 
-        <div className="flex justify-end">
-          <Button type="submit" isLoading={save.isPending} disabled={!isDirty} id="save-settings-btn">
-            <Save className="w-4 h-4 mr-1.5" /> Save Restaurant Settings
+        <Section title="Legacy homepage text" description="The current homepage uses fixed hero copy, so these two fields are not shown on the site. They are kept so nothing is lost.">
+          <Input label="Hero headline" id="settings-headline" {...register('headline')} />
+          <Input label="Hero subtitle" id="settings-subtitle" {...register('subtitle')} />
+        </Section>
+
+        <div className="sticky bottom-0 z-10 -mx-4 flex items-center justify-between gap-4 border-t border-line bg-canvas px-4 py-3 sm:mx-0 sm:rounded-lg sm:border sm:px-5">
+          <p className="text-sm text-muted" aria-live="polite">
+            {isDirty ? 'You have unsaved changes.' : 'All changes saved.'}
+          </p>
+          <Button type="submit" isLoading={save.isPending} disabled={!isDirty} id="save-settings-btn" leftIcon={<Save className="h-4 w-4" />}>
+            Save settings
           </Button>
         </div>
       </form>
 
-      {/* Social Links Management */}
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-4">
-        <h2 className="font-semibold text-charcoal flex items-center gap-2">
-          <Share2 className="w-4 h-4 text-terracotta" /> Social Media Links (Admin Configurable)
-        </h2>
-        <p className="text-xs text-stone-500">
-          Only active links with valid non-empty URLs will render public icons on the customer footer.
-        </p>
-        <div className="divide-y divide-stone-100">
+      <Section title="Social links" description="Only active links with a URL appear in the website footer.">
+        <ul className="divide-y divide-line">
           {(socialLinksData?.socialLinks || []).map((s) => (
-            <div key={s.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <span className="font-bold text-xs text-charcoal">{s.platform}</span>
-                <span className="text-[11px] text-stone-400 block">{s.url || 'No URL configured'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  defaultValue={s.url}
-                  placeholder={`https://${s.platform.toLowerCase()}.com/...`}
-                  className="text-xs px-2.5 py-1 border border-stone-200 rounded-lg w-48"
-                  id={`social-input-${s.id}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const input = document.getElementById(`social-input-${s.id}`) as HTMLInputElement;
-                    updateSocial.mutate({
-                      id: s.id,
-                      url: input?.value || '',
-                      isActive: !s.isActive,
-                    });
-                  }}
-                  className={`text-xs px-3 py-1 rounded-lg font-medium transition-colors ${
-                    s.isActive
-                      ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                  }`}
-                >
-                  {s.isActive ? 'Active (Click to Hide)' : 'Inactive (Click to Enable)'}
-                </button>
-              </div>
-            </div>
+            <li key={s.id} className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-end">
+              <Input
+                label={s.platform}
+                type="url"
+                defaultValue={s.url}
+                placeholder={`https://${s.platform.toLowerCase()}.com/...`}
+                id={`social-input-${s.id}`}
+                wrapperClassName="flex-1"
+              />
+              <RowAction
+                tone={s.isActive ? 'accent' : 'default'}
+                className="sm:mb-1"
+                onClick={() => {
+                  const input = document.getElementById(`social-input-${s.id}`) as HTMLInputElement;
+                  updateSocial.mutate({
+                    id: s.id,
+                    url: input?.value || '',
+                    isActive: !s.isActive,
+                  });
+                }}
+              >
+                {s.isActive ? 'Active · turn off' : 'Off · turn on'}
+              </RowAction>
+            </li>
           ))}
-        </div>
-      </div>
+        </ul>
+      </Section>
 
-      {/* Admin Security Settings */}
       <ChangePasswordCard />
     </div>
   );

@@ -1,29 +1,22 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { AlertCircle, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useRestaurant } from '../../context/RestaurantContext';
 import { apiRequest } from '../../api/client';
 import { Reservation } from '../../types';
-import { formatDateTime } from '../../utils/date';
+import { formatDate, formatTime } from '../../utils/date';
+import { hoursSummary } from '../../utils/openingHours';
 import { useTableAvailability } from '../../hooks/useTableAvailability';
-import { Button } from '../../components/ui/Button';
+import { Button, ButtonLink } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
-import { Card } from '../../components/ui/Card';
+import { Notice } from '../../components/ui/EmptyState';
 import { toast } from 'sonner';
-import {
-  Calendar as CalendarIcon,
-  CheckCircle2,
-  AlertCircle,
-  MapPin,
-  Phone,
-  Utensils,
-  Clock,
-} from 'lucide-react';
 
 const reservationSchema = z.object({
   date: z.string().min(1, 'Please select a date'),
@@ -141,164 +134,130 @@ export const ReservationPage: React.FC = () => {
     }
   };
 
+  const hours = hoursSummary(settings.openingHours);
+  const { isError: isAvailabilityError, isLoading: isAvailabilityLoading } = useTableAvailability();
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-12">
-      {/* Header */}
-      <div className="text-center max-w-xl mx-auto space-y-3">
-        <span className="text-xs font-bold text-terracotta uppercase tracking-wider block">
-          Dine-In Bookings
-        </span>
-        <h1 className="text-3xl sm:text-5xl font-serif font-bold text-charcoal tracking-tight">
-          Reserve a Table
-        </h1>
-        <p className="text-xs sm:text-sm text-charcoal-500 leading-relaxed">
-          100 tables available daily from 9:00 AM to 12:00 AM at Kohistan Tower, Saddar, Rawalpindi.
-        </p>
-      </div>
+    <div className="container-content pb-24 pt-10 sm:pt-14">
+      <div className="grid items-start gap-10 lg:grid-cols-[1fr_320px] lg:gap-16">
+        <div className="max-w-xl">
+          <h1 className="font-serif text-4xl text-ink">Book a table</h1>
+          <p className="mt-3 text-base text-muted">Choose a date, time and party size. We hold the table for 15 minutes.</p>
 
-      {confirmedReservation ? (
-        <Card className="p-8 sm:p-12 text-center space-y-6 max-w-xl mx-auto border-emerald-300 bg-emerald-50/40">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-sm">
-            <CheckCircle2 className="w-10 h-10" />
-          </div>
-
-          <div className="space-y-1">
-            <h2 className="text-2xl font-serif font-bold text-charcoal">
-              Reservation Confirmed!
-            </h2>
-            <p className="text-xs text-charcoal-600">
-              We have reserved your table at Euroshub Kitchen.
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded-xl border border-bistro-border divide-y divide-bistro-border text-xs space-y-2.5">
-            <div className="flex justify-between items-center pb-2">
-              <span className="text-charcoal-500">Date & Time</span>
-              <span className="font-bold text-charcoal-900">
-                {formatDateTime(confirmedReservation.date)}
+          {confirmedReservation ? (
+            <section aria-labelledby="res-done" className="mt-8 rounded-lg border border-line bg-surface p-6 sm:p-8" role="status">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-accent" aria-hidden="true">
+                <Check className="h-5 w-5" />
               </span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-charcoal-500">Party Size</span>
-              <span className="font-bold text-charcoal-900">
-                {confirmedReservation.partySize} {confirmedReservation.partySize === 1 ? 'Guest' : 'Guests'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center pt-2">
-              <span className="text-charcoal-500">Location</span>
-              <span className="font-medium text-charcoal-900">Kohistan Tower, Saddar, Rawalpindi</span>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <Link to="/account/reservations" className="flex-1">
-              <Button variant="outline" className="w-full">
-                View My Bookings
-              </Button>
-            </Link>
-            <Button
-              variant="primary"
-              className="flex-1"
-              onClick={() => setConfirmedReservation(null)}
-            >
-              Book Another Table
-            </Button>
-          </div>
-        </Card>
-      ) : (
-        <Card className="p-6 sm:p-10 max-w-2xl mx-auto shadow-md">
-          {apiError && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Unable to Reserve This Slot</p>
-                <p className="mt-0.5">{apiError}</p>
+              <h2 id="res-done" className="mt-5 font-serif text-2xl text-ink">
+                You’re booked.
+              </h2>
+              <dl className="mt-6 divide-y divide-line border-y border-line text-sm">
+                <div className="flex justify-between gap-4 py-3">
+                  <dt className="text-muted">Date</dt>
+                  <dd className="text-ink">{formatDate(confirmedReservation.date)}</dd>
+                </div>
+                <div className="flex justify-between gap-4 py-3">
+                  <dt className="text-muted">Time</dt>
+                  <dd className="text-ink">{formatTime(confirmedReservation.date)}</dd>
+                </div>
+                <div className="flex justify-between gap-4 py-3">
+                  <dt className="text-muted">Guests</dt>
+                  <dd className="tabular text-ink">{confirmedReservation.partySize}</dd>
+                </div>
+                <div className="flex justify-between gap-4 py-3">
+                  <dt className="text-muted">Status</dt>
+                  <dd className="text-ink">{confirmedReservation.status === 'PENDING' ? 'Awaiting confirmation' : confirmedReservation.status.toLowerCase()}</dd>
+                </div>
+              </dl>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <ButtonLink to="/account/reservations" variant="secondary">
+                  My reservations
+                </ButtonLink>
+                <Button variant="ghost" onClick={() => setConfirmedReservation(null)}>
+                  Book another
+                </Button>
               </div>
+            </section>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 rounded-lg border border-line bg-surface p-5 sm:p-8">
+              {apiError && (
+                <Notice tone="danger" icon={<AlertCircle />} title="That time didn’t work" className="mb-6">
+                  {apiError}
+                </Notice>
+              )}
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Input label="Date" type="date" min={todayStr} required error={errors.date?.message} {...register('date')} />
+                <Select
+                  label="Time"
+                  options={timeSlots}
+                  placeholder="Select a time"
+                  required
+                  error={errors.time?.message}
+                  {...register('time')}
+                />
+              </div>
+
+              <div className="mt-5 sm:max-w-[calc(50%-10px)]">
+                <Select label="Guests" options={partySizeOptions} required error={errors.partySize?.message} {...register('partySize')} />
+              </div>
+
+              <div className="mt-5">
+                <Textarea
+                  label="Notes"
+                  helperText="Optional. For example a high chair or a quieter table."
+                  rows={3}
+                  error={errors.notes?.message}
+                  {...register('notes')}
+                />
+              </div>
+
+              <Button type="submit" size="lg" className="mt-7 w-full sm:w-auto" isLoading={isSubmitting}>
+                Request booking
+              </Button>
+              {!isAuthenticated && <p className="mt-4 text-sm text-muted">You’ll be asked to sign in first.</p>}
+            </form>
+          )}
+        </div>
+
+        <aside className="space-y-8 border-t border-line pt-8 text-sm lg:mt-[7.5rem] lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+          <div>
+            <h2 className="eyebrow">Hours</h2>
+            <dl className="mt-3 space-y-1">
+              {hours.map((row) => (
+                <div key={row.label} className="flex justify-between gap-4">
+                  <dt className="text-muted">{row.label}</dt>
+                  <dd className="tabular text-ink">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          {!isAvailabilityLoading && !isAvailabilityError && availability && (
+            <div>
+              <h2 className="eyebrow">Right now</h2>
+              <p className="tabular mt-3 text-ink">
+                {availability.availableTables} of {availability.totalTables} tables free
+              </p>
             </div>
           )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Date *"
-                type="date"
-                min={todayStr}
-                error={errors.date?.message}
-                {...register('date')}
-              />
-
-              <Select
-                label="Time Slot (Daily 9:00 AM – 11:00 PM) *"
-                options={timeSlots}
-                placeholder="Select Time"
-                error={errors.time?.message}
-                {...register('time')}
-              />
-            </div>
-
-            <Select
-              label="Party Size *"
-              options={partySizeOptions}
-              error={errors.partySize?.message}
-              {...register('partySize')}
-            />
-
-            <Textarea
-              label="Special Notes (Optional)"
-              placeholder="e.g. Near window booth, table for business lunch..."
-              rows={3}
-              error={errors.notes?.message}
-              {...register('notes')}
-            />
-
-            <div className="pt-3">
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full"
-                isLoading={isSubmitting}
-                leftIcon={<CalendarIcon className="w-4 h-4" />}
-              >
-                Confirm Table Reservation
-              </Button>
-            </div>
-
-            <div className="pt-2 text-[11px] text-charcoal-400 text-center space-y-1">
-              <p>Reserved tables are held for 15 minutes past booking time.</p>
-              <p>Walk-ins welcome daily. {availability ? `${availability.totalTables} tables across the restaurant.` : 'Spacious seating available.'}</p>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      {/* Restaurant Highlights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 text-xs text-charcoal-600">
-        <div className="bg-white p-4 rounded-xl border border-bistro-border flex items-start space-x-3">
-          <MapPin className="w-5 h-5 text-terracotta flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-serif font-bold text-charcoal text-sm">Central Location</h4>
-            <p className="mt-0.5">{settings.address}</p>
+            <h2 className="eyebrow">Where</h2>
+            <p className="mt-3 text-ink">{settings.address}</p>
           </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-bistro-border flex items-start space-x-3">
-          <Utensils className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h4 className="font-serif font-bold text-charcoal text-sm">
-              {availability ? `${availability.availableTables} of ${availability.totalTables} Tables Available` : 'Spacious Seating'}
-            </h4>
-            <p className="mt-0.5">Fast-food seating designed for families and groups.</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-bistro-border flex items-start space-x-3">
-          <Phone className="w-5 h-5 text-terracotta flex-shrink-0 mt-0.5" />
-          <div>
-            <h4 className="font-serif font-bold text-charcoal text-sm">Direct Phone</h4>
-            <p className="mt-0.5">{settings.phone}</p>
-          </div>
-        </div>
+          {settings.phone && (
+            <div>
+              <h2 className="eyebrow">Questions</h2>
+              <p className="mt-3 text-muted">
+                Bigger group or a special request? Call{' '}
+                <a href={`tel:${settings.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex min-h-11 items-center text-ink underline underline-offset-4">
+                  {settings.phone}
+                </a>
+                .
+              </p>
+            </div>
+          )}
+        </aside>
       </div>
     </div>
   );

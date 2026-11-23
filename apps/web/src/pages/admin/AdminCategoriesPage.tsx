@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { apiRequest } from '../../api/client';
 import { MenuCategory } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { TableShell, THead, Th, Td, Tr, TableMessage, RowAction } from '../../components/ui/DataTable';
 
 interface CategoryForm {
   name: string;
@@ -80,85 +81,110 @@ export default function AdminCategoriesPage() {
     reset();
   };
 
+  const [pendingDelete, setPendingDelete] = useState<MenuCategory | null>(null);
+  const sorted = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
+
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center justify-between">
+    <div className="max-w-3xl space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-charcoal">Categories</h1>
-          <p className="text-stone-500 mt-1">Manage menu categories</p>
+          <h1 className="font-serif text-2xl text-ink">Categories</h1>
+          <p className="mt-1 text-sm text-muted">Shown on the menu in sort order, lowest first.</p>
         </div>
-        <Button onClick={openCreate} id="add-category-btn">
-          <Plus className="w-4 h-4 mr-1.5" /> Add Category
+        <Button onClick={openCreate} id="add-category-btn" size="sm" leftIcon={<Plus className="h-4 w-4" />}>
+          Add category
         </Button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-5 space-y-3">
-            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
-          </div>
-        ) : (
-          <div className="divide-y divide-stone-100">
-            {[...categories].sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
-              <div key={cat.id} className="flex items-center justify-between px-5 py-4 hover:bg-stone-50/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <GripVertical className="w-4 h-4 text-stone-300" />
-                  <div>
-                    <p className="font-semibold text-charcoal">{cat.name}</p>
-                    <p className="text-xs text-stone-400">Sort order: {cat.sortOrder} · {cat._count?.items ?? 0} items</p>
+      <TableShell>
+        <THead>
+          <tr>
+            <Th className="w-20 text-right">Order</Th>
+            <Th>Name</Th>
+            <Th className="text-right">Dishes</Th>
+            <Th className="text-right">
+              <span className="sr-only">Actions</span>
+            </Th>
+          </tr>
+        </THead>
+        <tbody>
+          {isLoading ? (
+            [...Array(5)].map((_, i) => (
+              <tr key={i} className="border-b border-line">
+                {[...Array(4)].map((_, j) => (
+                  <Td key={j}>
+                    <Skeleton className="h-5 w-full" />
+                  </Td>
+                ))}
+              </tr>
+            ))
+          ) : sorted.length === 0 ? (
+            <TableMessage colSpan={4}>No categories yet. Add one to start building the menu.</TableMessage>
+          ) : (
+            sorted.map((cat) => (
+              <Tr key={cat.id}>
+                <Td className="tabular text-right text-muted">{cat.sortOrder}</Td>
+                <Td className="text-ink">{cat.name}</Td>
+                <Td className="tabular text-right text-muted">{cat._count?.items ?? 0}</Td>
+                <Td>
+                  <div className="flex justify-end gap-1.5">
+                    <RowAction onClick={() => openEdit(cat)} id={`edit-category-${cat.id}`} aria-label={`Edit ${cat.name}`}>
+                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> Edit
+                    </RowAction>
+                    <RowAction tone="danger" onClick={() => setPendingDelete(cat)} id={`delete-category-${cat.id}`} aria-label={`Delete ${cat.name}`}>
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Delete
+                    </RowAction>
                   </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEdit(cat)}
-                    className="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-100 text-stone-500 hover:text-charcoal transition-colors"
-                    id={`edit-category-${cat.id}`}
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm(`Delete "${cat.name}"? This will fail if it has items.`)) {
-                        deleteCategory.mutate(cat.id);
-                      }
-                    }}
-                    className="p-1.5 rounded-lg border border-red-100 hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
-                    id={`delete-category-${cat.id}`}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-            {categories.length === 0 && (
-              <div className="text-center py-10 text-stone-400">No categories yet.</div>
-            )}
-          </div>
-        )}
-      </div>
+                </Td>
+              </Tr>
+            ))
+          )}
+        </tbody>
+      </TableShell>
 
-      <Modal isOpen={showModal} onClose={closeModal} title={editing ? 'Edit Category' : 'Add Category'}>
-        <form onSubmit={handleSubmit((d) => upsert.mutate(d))} className="space-y-4" id="category-form">
+      <Modal isOpen={showModal} onClose={closeModal} title={editing ? 'Edit category' : 'Add category'}>
+        <form onSubmit={handleSubmit((d) => upsert.mutate(d))} className="space-y-5" id="category-form">
           <Input
-            label="Category Name"
+            label="Name"
             id="category-name"
-            placeholder="e.g. Starters, Main Course"
+            placeholder="e.g. Burgers"
             {...register('name', { required: 'Name is required' })}
             error={errors.name?.message}
           />
           <Input
-            label="Sort Order"
+            label="Sort order"
             id="category-sort-order"
             type="number"
+            helperText="Lower numbers appear first."
             {...register('sortOrder', { required: true, valueAsNumber: true })}
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="secondary" onClick={closeModal} id="cancel-category-btn">Cancel</Button>
+            <Button type="button" variant="ghost" onClick={closeModal} id="cancel-category-btn">
+              Cancel
+            </Button>
             <Button type="submit" isLoading={upsert.isPending} id="save-category-btn">
-              {editing ? 'Update' : 'Create'}
+              {editing ? 'Save changes' : 'Add category'}
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={!!pendingDelete} onClose={() => setPendingDelete(null)} title={`Delete “${pendingDelete?.name ?? ''}”?`} maxWidth="sm">
+        <p className="text-sm text-muted">This fails if the category still has dishes. Move or delete them first.</p>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setPendingDelete(null)}>
+            Keep it
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (pendingDelete) deleteCategory.mutate(pendingDelete.id);
+              setPendingDelete(null);
+            }}
+          >
+            Delete
+          </Button>
+        </div>
       </Modal>
     </div>
   );
